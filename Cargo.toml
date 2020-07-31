@@ -1,0 +1,13 @@
+[package]
+name = "spire_rogue"
+version = "0.1.0"
+authors = ["Raymond Ng <raymondng@berkeley.edu>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rltk = "0.8.1"
+specs = "0.16.1"
+specs-derive = "0.4.1"
+rand = "0.7.3"

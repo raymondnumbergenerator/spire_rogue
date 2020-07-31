@@ -1,0 +1,59 @@
+use specs::prelude::*;
+use super::super::{Name, Monster, gamelog::GameLog, RunState, CombatStats, StatusWeak};
+
+pub struct EndTurnSystem {}
+
+impl<'a> System<'a> for EndTurnSystem {
+    type SystemData = (
+        ReadExpect<'a, RunState>,
+        WriteExpect<'a, GameLog>,
+        Entities<'a>,
+        ReadExpect<'a, Entity>,
+        ReadStorage<'a, Name>,
+        ReadStorage<'a, Monster>,
+        WriteStorage<'a, CombatStats>,
+        WriteStorage<'a, StatusWeak>,
+    );
+
+    fn run(&mut self, data : Self::SystemData) {
+        let (runstate, mut log, entities, player_ent, names, mob, mut stats, mut statusweak) = data;
+
+        // Skip if not on endturn
+        let mut turn: bool = false;
+        match *runstate {
+            RunState::EndTurn{player_turn} => { turn = player_turn; }
+            _ => { return; }
+        }
+
+        // Reduce all status effects by a turn
+        let mut to_remove_weak = Vec::new();
+        for (ent, mut weak) in (&entities, &mut statusweak).join() {
+            if turn {
+                if ent == *player_ent { weak.turns -= 1; }
+            } else {
+                if let Some(_) = mob.get(ent) {
+                    weak.turns -= 1;
+                }
+            }
+            if weak.turns < 1 {
+                to_remove_weak.push(ent);
+            }
+        }
+        for to_remove in to_remove_weak {
+            if let Some(ent_name) = names.get(to_remove) {
+                log.push(format!("Weakness wears off for {}.", ent_name.name.to_string()));
+            }
+            statusweak.remove(to_remove);
+        }
+
+        // Decay all block
+        for (ent, mut stat) in (&entities, &mut stats).join() {
+            if turn {
+                if !(ent == *player_ent) { stat.block = 0; }
+            } else {
+                if ent == *player_ent { stat.block = 0; }
+            }
+        }
+
+    }
+}
