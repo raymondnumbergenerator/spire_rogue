@@ -85,12 +85,12 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
     }
 }
 
-pub fn ranged_target(ecs: &World, ctx: &mut Rltk, range: i32) -> (ItemMenuResult, Option<Point>) {
+pub fn ranged_target(ecs: &World, ctx: &mut Rltk, range: i32, radius: i32) -> (ItemMenuResult, Option<Point>) {
     let player_entity = ecs.fetch::<Entity>();
     let player_pos = ecs.fetch::<Point>();
     let viewsheds = ecs.read_storage::<Viewshed>();
-
-    // ctx.print_color(0, 0, RGB::named(rltk::YELLOW), RGB::named(rltk::BLACK), "Select target");
+    let mouse_pos = ctx.mouse_pos();
+    let mouse_point = Point::new(mouse_pos.0, mouse_pos.1);
 
     // Highlight available target cells
     let mut available_cells = Vec::new();
@@ -106,8 +106,17 @@ pub fn ranged_target(ecs: &World, ctx: &mut Rltk, range: i32) -> (ItemMenuResult
         return (ItemMenuResult::Cancel, None);
     }
 
+    // Highlight radius for aoe attacks
+    if let Some(visible) = viewsheds.get(*player_entity) {
+        for idx in visible.visible_tiles.iter() {
+            let dist = rltk::DistanceAlg::Pythagoras.distance2d(mouse_point, *idx);
+            if dist <= radius as f32 {
+                ctx.set_bg(idx.x, idx.y, RGB::named(rltk::CYAN));
+            }
+        }
+    }
+
     // Draw mouse cursor
-    let mouse_pos = ctx.mouse_pos();
     let mut valid_target = false;
     for idx in available_cells.iter() { if idx.x == mouse_pos.0 && idx.y == mouse_pos.1 { valid_target = true; } }
     if valid_target {

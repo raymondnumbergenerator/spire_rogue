@@ -41,7 +41,7 @@ pub enum RunState {
     MonsterTurn,
     ShowInventory,
     ShowHand,
-    ShowTargeting { range: i32, item: Entity },
+    ShowTargeting { range: i32, radius: i32, item: Entity },
 }
 
 pub struct State {
@@ -117,10 +117,8 @@ impl GameState for State {
                 self.ecs.maintain();
                 if player_turn {
                     newrunstate = RunState::MonsterTurn;
-                    println!("Player ends turn.");
                 } else {
                     newrunstate = RunState::AwaitingInput;
-                    println!("Monsters end turn.");
                 }
             }
             RunState::MonsterTurn => {
@@ -135,9 +133,15 @@ impl GameState for State {
                     gui::ItemMenuResult::NoResponse => {},
                     gui::ItemMenuResult::Selected => {
                         let item_entity = result.1.unwrap();
-                        if let Some(ranged_item) = self.ecs.read_storage::<Ranged>().get(item_entity) {
+                        let mut radius = 0;
+                        if let Some(r) = self.ecs.read_storage::<AreaOfEffect>().get(item_entity) {
+                            radius = r.radius;
+                        }
+
+                        if let Some(ranged_item) = self.ecs.read_storage::<Targeted>().get(item_entity) {
                             newrunstate = RunState::ShowTargeting{
                                 range: ranged_item.range, 
+                                radius: radius,
                                 item: item_entity
                             };
                         } else {
@@ -156,9 +160,15 @@ impl GameState for State {
                     gui::ItemMenuResult::NoResponse => {},
                     gui::ItemMenuResult::Selected => {
                         let item_entity = result.1.unwrap();
-                        if let Some(ranged_item) = self.ecs.read_storage::<Ranged>().get(item_entity) {
+                        let mut radius = 0;
+                        if let Some(r) = self.ecs.read_storage::<AreaOfEffect>().get(item_entity) {
+                            radius = r.radius;
+                        }
+
+                        if let Some(ranged_item) = self.ecs.read_storage::<Targeted>().get(item_entity) {
                             newrunstate = RunState::ShowTargeting{
                                 range: ranged_item.range, 
+                                radius: radius,
                                 item: item_entity
                             };
                         } else {
@@ -169,8 +179,8 @@ impl GameState for State {
                     }
                 }
             }
-            RunState::ShowTargeting{range, item} => {
-                let result = gui::ranged_target(&self.ecs, ctx, range);
+            RunState::ShowTargeting{range, radius, item} => {
+                let result = gui::ranged_target(&self.ecs, ctx, range, radius);
                 match result.0 {
                     gui::ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
                     gui::ItemMenuResult::NoResponse => {},
@@ -194,7 +204,7 @@ impl GameState for State {
 fn main() -> rltk::BError {
     use rltk::RltkBuilder;
     let mut context = RltkBuilder::simple80x50()
-        .with_title("stsrl")
+        .with_title("spire_rogue")
         .build()?;
     context.with_post_scanlines(true);
 
@@ -221,7 +231,7 @@ fn main() -> rltk::BError {
     gs.ecs.register::<WantsToUseItem>();
     gs.ecs.register::<GainBlock>();
     gs.ecs.register::<DealDamage>();
-    gs.ecs.register::<Ranged>();
+    gs.ecs.register::<Targeted>();
     gs.ecs.register::<AreaOfEffect>();
     gs.ecs.register::<StatusWeak>();
 

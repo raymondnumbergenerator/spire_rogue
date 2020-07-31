@@ -2,7 +2,7 @@ use specs::prelude::*;
 use rltk::{RGB, RandomNumberGenerator};
 
 use super::{Position, Renderable, Player, Name, Viewshed, CombatStats, Monster, BlocksTile};
-use super::{Potion, Item, GainBlock, DealDamage, Ranged, AreaOfEffect};
+use super::{Potion, Item, GainBlock, DealDamage, Targeted, AreaOfEffect};
 use super::{map::MAPWIDTH};
 use super::{rect::Rect};
 
@@ -11,7 +11,7 @@ pub fn player(ecs: &mut World, x: i32, y: i32) -> Entity {
         .with(Position{ x, y })
         .with(Renderable{
             glyph: rltk::to_cp437('@'),
-            fg: RGB::named(rltk::SPRING_GREEN),
+            fg: RGB::from_f32(0.0, 0.5, 0.0),
             bg: RGB::named(rltk::BLACK),
             render_order: 0,
         })
@@ -50,7 +50,7 @@ fn potion_fire(ecs: &mut World, x: i32, y: i32) {
         .with(Name{ name: "Fire Potion".to_string() })
         .with(Item{})
         .with(Potion{})
-        .with(Ranged{ range: 3 })
+        .with(Targeted{ range: 3 })
         .with(DealDamage{ amount: 20 })
         .build();
 }
@@ -67,9 +67,9 @@ fn potion_explosive(ecs: &mut World, x: i32, y: i32) {
         .with(Name{ name: "Explosive Potion".to_string() })
         .with(Item{})
         .with(Potion{})
-        .with(Ranged{ range: 5 })
+        .with(Targeted{ range: 5 })
         .with(DealDamage{ amount: 10 })
-        .with(AreaOfEffect{ radius: 3 })
+        .with(AreaOfEffect{ radius: 1 })
         .build();
 }
 

@@ -1,7 +1,7 @@
 use specs::prelude::*;
 
 use super::super::{
-    Name, Card, Ranged,
+    Name, Card, Targeted,
     GainBlock, DealDamage, StatusWeak
 };
 
@@ -10,7 +10,7 @@ fn strike(ecs: &mut World) -> Entity {
         .with(Name{ name: "Strike".to_string() })
         .with(Card{ energy_cost: 1 })
         .with(DealDamage{ amount: 6 })
-        .with(Ranged{ range: 2 })
+        .with(Targeted{ range: 2 })
         .build()
 }
 
@@ -28,7 +28,7 @@ fn neutralize(ecs: &mut World) -> Entity {
         .with(Card{ energy_cost: 0 })
         .with(DealDamage{ amount: 3 })
         .with(StatusWeak{ turns: 1 })
-        .with(Ranged{ range: 2 })
+        .with(Targeted{ range: 2 })
         .build()
 }
 

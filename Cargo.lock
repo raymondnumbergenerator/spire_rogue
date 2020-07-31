@@ -1291,16 +1291,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "26412eb97c6b088a6997e05f69403a802a92d520de2f8e63c2b65f9e0f47c4e8"
 
 [[package]]
-name = "rl"
-version = "0.1.0"
-dependencies = [
- "rand",
- "rltk",
- "specs",
- "specs-derive",
-]
-
-[[package]]
 name = "rltk"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1478,6 +1468,16 @@ dependencies = [
  "proc-macro2 1.0.19",
  "quote 1.0.7",
  "syn",
+]
+
+[[package]]
+name = "spire_rogue"
+version = "0.1.0"
+dependencies = [
+ "rand",
+ "rltk",
+ "specs",
+ "specs-derive",
 ]
 
 [[package]]

@@ -41,7 +41,7 @@ pub struct CombatStats {
 }
 
 #[derive(Component, Debug)]
-pub struct Ranged {
+pub struct Targeted {
     pub range: i32
 }
 
