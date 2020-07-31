@@ -5,7 +5,7 @@ use std::char;
 
 use super::{
     CombatStats, Player, Map, Name, Card, Position, InBackpack, Point, Viewshed,
-    deck::Deck, utils, gamelog::GameLog,
+    deck::Deck, util::utils, gamelog::GameLog,
     map::MAPWIDTH, map::MAPHEIGHT, WINDOWHEIGHT, deck::MAX_HAND_SIZE
 };
 

@@ -1,10 +1,12 @@
 use specs::prelude::*;
 use rltk::{RGB, RandomNumberGenerator};
 
-use super::{Position, Renderable, Player, Name, Viewshed, CombatStats, Monster, BlocksTile};
-use super::{Potion, Item, GainBlock, DealDamage, Targeted, AreaOfEffect};
-use super::{map::MAPWIDTH};
-use super::{rect::Rect};
+use super::{
+    Position, Name, Renderable, Player, CombatStats,
+    Viewshed, Monster, BlocksTile,
+    Potion, Item, GainBlock, DealDamage, Targeted, AreaOfEffect,
+    util::rect::Rect, map::MAPWIDTH,
+};
 
 pub fn player(ecs: &mut World, x: i32, y: i32) -> Entity {
     ecs.create_entity()

@@ -1,7 +1,7 @@
 use specs::prelude::*;
 use rltk::{RGB, Rltk, RandomNumberGenerator, Algorithm2D, BaseMap, Point};
 
-use super::{rect::Rect, line::line};
+use super::{util::rect::Rect, util::line::line};
 use super::{WINDOWWIDTH, WINDOWHEIGHT, gui::GUISIZE};
 
 pub const MAPWIDTH: usize = WINDOWWIDTH;

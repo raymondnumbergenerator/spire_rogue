@@ -11,23 +11,31 @@ pub struct ItemUseSystem {}
 
 impl<'a> System<'a> for InventorySystem {
     type SystemData = (
-        ReadExpect<'a, Entity>,
         WriteExpect<'a, GameLog>,
         ReadStorage<'a, Name>,
         WriteStorage<'a, Position>,
+        ReadStorage<'a, Potion>,
         WriteStorage<'a, WantsToPickupItem>,
-        WriteStorage<'a, InBackpack>
+        WriteStorage<'a, InBackpack>,
+        WriteExpect<'a, Deck>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (player_entity, mut log, names, mut positions, mut wants_pickup, mut backpack) = data;
+        let (mut log, names, mut positions, potions, mut wants_pickup, mut backpack, mut deck) = data;
 
         for pickup in wants_pickup.join() {
             positions.remove(pickup.item);
-            backpack.insert(pickup.item, InBackpack{ owner: pickup.collected_by }).expect("Unable to pickup item");
-            if pickup.collected_by == *player_entity {
+            // Gain potions
+            if let Some(_) = potions.get(pickup.item) {
+                backpack.insert(pickup.item, InBackpack{ owner: pickup.collected_by }).expect("Unable to pickup item");
                 log.push(format!("You pick up the {}.", names.get(pickup.item).unwrap().name));
             }
+            // Gain cards
+            else {
+                deck.gain_card(pickup.item);
+                log.push(format!("You gain {}.", names.get(pickup.item).unwrap().name));
+            }
+
         }
 
         wants_pickup.clear();

@@ -1,9 +1,7 @@
 use specs::prelude::*;
 use rltk::{Rltk, GameState, Point};
 
-mod line;
-mod rect;
-mod utils;
+mod util;
 
 mod gui;
 mod gamelog;
@@ -16,8 +14,8 @@ mod spawner;
 
 mod components;
 pub use components::*;
-mod players;
-pub use players::*;
+mod player;
+pub use player::*;
 
 mod game_systems;
 use game_systems::damage::DamageSystem;
@@ -256,7 +254,7 @@ fn main() -> rltk::BError {
         draw: Vec::new(),
         discard: Vec::new(),
     };
-    initial_deck.gain(cards::silent::starter(&mut gs.ecs));
+    initial_deck.gain_multiple_cards(cards::silent::starter(&mut gs.ecs));
     for _ in 0..5 {
         initial_deck.draw();
     }
