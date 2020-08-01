@@ -61,7 +61,7 @@ fn cleave(ecs: &mut World, x: i32, y: i32) -> Entity {
         .with(Item{})
         .with(Card{ energy_cost: 1 })
         .with(effects::DealDamage{ amount: 8 })
-        .with(AreaOfEffect{ radius: 3 })
+        .with(AreaOfEffect{ radius: 2 })
         .with(Targeted{ range: 0 })
         .with(Position{ x, y })
         .with(Renderable{
@@ -107,8 +107,8 @@ pub fn random_card(ecs: &mut World, x: i32, y: i32) {
 
 pub fn starter(ecs: &mut World) -> Vec<Entity> {
     let mut init_deck = Vec::new();
-    for _ in 0..5 { init_deck.push(strike(ecs)); }
-    for _ in 0..4 { init_deck.push(defend(ecs)); }
+    for _ in 0 .. 5 { init_deck.push(strike(ecs)); }
+    for _ in 0 .. 4 { init_deck.push(defend(ecs)); }
     init_deck.push(bash(ecs));
 
     init_deck

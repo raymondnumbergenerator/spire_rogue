@@ -75,7 +75,7 @@ fn restore_energy(ecs: &mut World) {
     }
 }
 
-fn player_end_turn(ecs: &mut World) {
+fn end_turn(ecs: &mut World) {
     redraw_hand(ecs);
     restore_energy(ecs);
 }
@@ -94,10 +94,11 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
             VirtualKeyCode::C => return move_player(1, 1, &mut gs.ecs),
             VirtualKeyCode::P => return RunState::ShowInventory,
             VirtualKeyCode::Tab => return RunState::ShowHand,
-            VirtualKeyCode::Space => player_end_turn(&mut gs.ecs),
+            VirtualKeyCode::Space => end_turn(&mut gs.ecs),
             VirtualKeyCode::G => get_item(&mut gs.ecs),
             _ => { return RunState::AwaitingInput }
         }
     }
+
     RunState::EndTurn{ player_turn: true }
 }

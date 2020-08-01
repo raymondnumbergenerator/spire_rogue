@@ -14,19 +14,6 @@ const INVENTORYWIDTH: usize = 25;
 const INVENTORYPOS: usize = MAPWIDTH - INVENTORYWIDTH - 1;
 
 #[derive(PartialEq, Copy, Clone)]
-pub enum MainMenuSelection {
-    NewGame,
-    LoadGame,
-    Quit,
-}
-
-#[derive(PartialEq, Copy, Clone)]
-pub enum MainMenuresult {
-    NoSelection{ selected: MainMenuSelection },
-    Selected{ selected: MainMenuSelection },
-}
-
-#[derive(PartialEq, Copy, Clone)]
 pub enum ItemMenuResult {
     Cancel,
     NoResponse,

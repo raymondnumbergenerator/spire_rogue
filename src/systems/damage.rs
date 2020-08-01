@@ -1,8 +1,6 @@
 use specs::prelude::*;
 use super::super::{gamelog::GameLog, CombatStats, SufferDamage, Name};
 
-use rltk::{console};
-
 pub struct DamageSystem {}
 pub struct DeadCleanupSystem {}
 
@@ -49,7 +47,7 @@ impl<'a>System<'a> for DeadCleanupSystem {
         for (entity, stats) in (&entities, &combat_stats).join() {
             if stats.hp < 1 {
                 if entity == *player_entity {
-                    console::log("You are dead");
+                    ::std::process::exit(0);
                 } else {
                     if let Some(victim_name) = names.get(entity) {
                         log.push(format!("{} is dead!", victim_name.name));

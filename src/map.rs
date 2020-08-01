@@ -92,7 +92,7 @@ impl Map {
     
         let mut rng = RandomNumberGenerator::new();
     
-        for _ in 0..MAX_ROOMS {
+        for _ in 0 .. MAX_ROOMS {
             let w = rng.range(MIN_SIZE, MAX_SIZE);
             let h = rng.range(MIN_SIZE, MAX_SIZE);
             let x = rng.roll_dice(1, map.width - w - 1) - 1;
@@ -130,14 +130,14 @@ impl Map {
         let room = Rect::new(0, 0, map.width, map.height);
         map.rooms.push(room);
     
-        for x in 0..map.width {
+        for x in 0 .. map.width {
             let idx_1 = map.xy_idx(x, 0);
             let idx_2 = map.xy_idx(x, map.height - 1);
             map.tiles[idx_1] = TileType::Wall;
             map.tiles[idx_2] = TileType::Wall;
         }
     
-        for y in 0..map.height {
+        for y in 0 .. map.height {
             let idx_1 = map.xy_idx(0, y);
             let idx_2 = map.xy_idx(map.width - 1, y);
             map.tiles[idx_1] = TileType::Wall;
@@ -146,7 +146,7 @@ impl Map {
     
         let mut rng = RandomNumberGenerator::new();
     
-        for _i in 0..(map.width * map.height) {
+        for _i in 0 .. (map.width * map.height) {
             let x = rng.roll_dice(1, map.width - 1);
             let y = rng.roll_dice(1, map.height - 1);
             let idx = map.xy_idx(x, y);

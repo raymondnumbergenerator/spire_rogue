@@ -1,3 +1,5 @@
+#![windows_subsystem = "windows"]
+
 use specs::prelude::*;
 use rltk::{Rltk, GameState, Point};
 
@@ -7,6 +9,7 @@ mod gui;
 mod gamelog;
 mod map;
 use map::Map;
+mod menu;
 mod player;
 use player::*;
 
@@ -35,7 +38,7 @@ pub enum RunState {
     ShowInventory,
     ShowHand,
     ShowTargeting { range: i32, radius: i32, item: Entity },
-    // MainMenu { menu_selection: gui::MainMenuSelection }
+    MainMenu { menu_selection: menu::MainMenuSelection }
 }
 
 pub struct State {
@@ -70,23 +73,6 @@ impl GameState for State {
     fn tick(&mut self, ctx: &mut Rltk) {
         ctx.cls();
 
-        map::draw_map(&self.ecs, ctx);
-        {
-            let positions = self.ecs.read_storage::<Position>();
-            let renderables = self.ecs.read_storage::<Renderable>();
-            let map = self.ecs.fetch::<Map>();
-    
-            let mut data = (&positions, &renderables).join().collect::<Vec<_>>();
-            data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
-    
-            for (pos, render) in data.iter() {
-                let idx = map.xy_idx(pos.x, pos.y);
-                if map.visible_tiles[idx] { ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph); }
-            }
-
-            gui::draw_ui(&self.ecs, ctx);
-        }
-
         let mut newrunstate;
         {
             let runstate = self.ecs.fetch::<RunState>();
@@ -94,6 +80,27 @@ impl GameState for State {
         }
 
         // State machine
+        match newrunstate {
+            RunState::MainMenu{..} => {}
+            _ => {
+                map::draw_map(&self.ecs, ctx);
+                {
+                    let positions = self.ecs.read_storage::<Position>();
+                    let renderables = self.ecs.read_storage::<Renderable>();
+                    let map = self.ecs.fetch::<Map>();
+            
+                    let mut data = (&positions, &renderables).join().collect::<Vec<_>>();
+                    data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
+            
+                    for (pos, render) in data.iter() {
+                        let idx = map.xy_idx(pos.x, pos.y);
+                        if map.visible_tiles[idx] { ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph); }
+                    }
+        
+                    gui::draw_ui(&self.ecs, ctx);
+                }
+            }
+        }
         match newrunstate {
             RunState::PreRun => {
                 self.run_systems();
@@ -187,6 +194,19 @@ impl GameState for State {
                     }
                 }
             }
+            RunState::MainMenu{..} => {
+                let result = menu::main_menu(&mut self.ecs, ctx);
+                match result {
+                    menu::MainMenuResult::NoSelection{ selected } => newrunstate = RunState::MainMenu{ menu_selection: selected },
+                    menu::MainMenuResult::Selected{ selected } => {
+                        match selected {
+                            menu::MainMenuSelection::NewGame => newrunstate = RunState::PreRun,
+                            menu::MainMenuSelection::LoadGame => newrunstate = RunState::PreRun,
+                            menu::MainMenuSelection::Quit => { ::std::process::exit(0); }
+                        }
+                    }
+                }
+            }
         }
 
         {
@@ -205,7 +225,7 @@ fn main() -> rltk::BError {
 
     // Create gamestate and register runstate resource
     let mut gs = State{ ecs: World::new() };
-    gs.ecs.insert(RunState::PreRun);
+    gs.ecs.insert(RunState::MainMenu{ menu_selection: menu::MainMenuSelection::NewGame });
 
     // Register components
     gs.ecs.register::<Position>();
@@ -256,7 +276,7 @@ fn main() -> rltk::BError {
         discard: Vec::new(),
     };
     initial_deck.gain_multiple_cards(cards::ironclad::starter(&mut gs.ecs));
-    for _ in 0..5 {
+    for _ in 0 .. 5 {
         initial_deck.draw();
     }
     gs.ecs.insert(initial_deck);

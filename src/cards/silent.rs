@@ -56,8 +56,8 @@ pub fn slice(ecs: &mut World, x: i32, y: i32) -> Entity {
 
 pub fn starter(ecs: &mut World) -> Vec<Entity> {
     let mut init_deck = Vec::new();
-    for _ in 0..5 { init_deck.push(strike(ecs)); }
-    for _ in 0..5 { init_deck.push(defend(ecs)); }
+    for _ in 0 .. 5 { init_deck.push(strike(ecs)); }
+    for _ in 0 .. 5 { init_deck.push(defend(ecs)); }
     init_deck.push(neutralize(ecs));
 
     init_deck

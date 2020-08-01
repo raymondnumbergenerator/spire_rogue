@@ -12,14 +12,14 @@ pub struct Deck {
 }
 
 impl Deck {
+    pub fn gain_card(&mut self, c: Entity) {
+        self.discard.push(c);
+    }
+
     pub fn gain_multiple_cards(&mut self, cards: Vec<Entity>) {
         for c in cards {
             self.gain_card(c)
         }
-    }
-
-    pub fn gain_card(&mut self, c: Entity) {
-        self.discard.push(c);
     }
 
     pub fn reshuffle(&mut self) {
