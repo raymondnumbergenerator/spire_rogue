@@ -17,7 +17,7 @@ impl<'a> System<'a> for EndTurnSystem {
     );
 
     fn run(&mut self, data : Self::SystemData) {
-        let (runstate, mut log, entities, player_ent, names, mob, mut stats, mut status_weak, mut status_vulnerable) = data;
+        let (runstate, mut log, entities, player_ent, names, monsters, mut stats, mut status_weak, mut status_vulnerable) = data;
 
         // Skip if not on endturn
         let turn: bool;
@@ -33,7 +33,7 @@ impl<'a> System<'a> for EndTurnSystem {
                 if turn {
                     if ent == *player_ent { weak.turns -= 1; }
                 } else {
-                    if let Some(_) = mob.get(ent) {
+                    if let Some(_) = monsters.get(ent) {
                         weak.turns -= 1;
                     }
                 }
@@ -56,7 +56,7 @@ impl<'a> System<'a> for EndTurnSystem {
                 if turn {
                     if ent == *player_ent { vulnerable.turns -= 1; }
                 } else {
-                    if let Some(_) = mob.get(ent) {
+                    if let Some(_) = monsters.get(ent) {
                         vulnerable.turns -= 1;
                     }
                 }
