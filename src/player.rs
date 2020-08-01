@@ -34,12 +34,6 @@ pub fn move_player(delta_x: i32, delta_y: i32, ecs: &mut World) -> RunState {
     RunState::AwaitingInput
 }
 
-// fn magic_mapping(ecs: &mut World) {
-//     let mut map = ecs.fetch_mut::<Map>();
-
-//     for t in map.revealed_tiles.iter_mut() { *t = true; }
-// }
-
 fn get_item(ecs: &mut World) {
     let player_pos = ecs.fetch::<Point>();
     let player_entity = ecs.fetch::<Entity>();

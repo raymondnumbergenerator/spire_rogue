@@ -51,6 +51,7 @@ impl Map {
     }
 
     pub fn populate_blocked(&mut self) {
+
         for (i, tile) in self.tiles.iter_mut().enumerate() {
             self.blocked[i] = *tile == TileType::Wall;
         }

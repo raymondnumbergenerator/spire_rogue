@@ -13,12 +13,12 @@ pub fn player(ecs: &mut World, x: i32, y: i32) -> Entity {
         .with(Position{ x, y })
         .with(Renderable{
             glyph: rltk::to_cp437('@'),
-            fg: RGB::from_f32(0.0, 0.5, 0.0),
+            fg: RGB::from_f32(0.8, 0.6, 0.1),
             bg: RGB::named(rltk::BLACK),
             render_order: 0,
         })
         .with(Player{ max_energy: 3, energy: 3 })
-        .with(Name{ name: "Silent".to_string() })
+        .with(Name{ name: "Ironclad".to_string() })
         .with(Viewshed{ visible_tiles: Vec::new(), range: 8, dirty: true })
         .with(CombatStats{ max_hp: 70, hp: 70, def: 0, atk: 6, block: 0 })
         .build()

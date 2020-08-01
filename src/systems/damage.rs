@@ -1,9 +1,10 @@
 use specs::prelude::*;
-use super::super::{gamelog::GameLog, CombatStats, SufferDamage, Player, Name};
+use super::super::{gamelog::GameLog, CombatStats, SufferDamage, Name};
 
 use rltk::{console};
 
 pub struct DamageSystem {}
+pub struct DeadCleanupSystem {}
 
 impl<'a> System<'a> for DamageSystem {
     type SystemData = (
@@ -32,18 +33,22 @@ impl<'a> System<'a> for DamageSystem {
     }
 }
 
-pub fn delete_dead(ecs: &mut World) {
-    let mut dead : Vec<Entity> = Vec::new();
-    {
-        let combat_stats = ecs.read_storage::<CombatStats>();
-        let names = ecs.read_storage::<Name>();
-        let players = ecs.read_storage::<Player>();
-        let entities = ecs.entities();
-        let mut log = ecs.write_resource::<GameLog>();
+impl<'a>System<'a> for DeadCleanupSystem {
+    type SystemData = (
+        Entities<'a>,
+        ReadStorage<'a, Name>,
+        ReadStorage<'a, CombatStats>,
+        WriteExpect<'a, GameLog>,
+        ReadExpect<'a, Entity>,
+    );
 
+    fn run(&mut self, data: Self::SystemData) {
+        let (entities, names, combat_stats, mut log, player_entity) = data;
+
+        let mut dead: Vec<Entity> = Vec::new();
         for (entity, stats) in (&entities, &combat_stats).join() {
             if stats.hp < 1 {
-                if let Some(_) = players.get(entity) {
+                if entity == *player_entity {
                     console::log("You are dead");
                 } else {
                     if let Some(victim_name) = names.get(entity) {
@@ -53,9 +58,10 @@ pub fn delete_dead(ecs: &mut World) {
                 }
             }
         }
-    }
 
-    for victim in dead {
-        ecs.delete_entity(victim).expect("Unable to delete");
+        for victim in dead {
+            entities.delete(victim).expect("Unable to delete");
+            println!("entity deleted");
+        }
     }
 }

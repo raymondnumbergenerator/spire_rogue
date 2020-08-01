@@ -116,7 +116,6 @@ impl<'a> System<'a> for ItemUseSystem {
                     // Check for status: vulnerable
                     if let Some(_) = status_vulnerable.get_mut(*target) {
                         dmg = (dmg as f32 * 1.5) as i32;
-                        println!("{}", dmg);
                     }
 
                     SufferDamage::new_damage(&mut suffer_damage, *target, dmg);
@@ -173,6 +172,7 @@ impl<'a> System<'a> for ItemUseSystem {
                 }
             }
             
+            // Remove used potion or discard used card
             if let Some(_) = potions.get(intent.item) {
                 entities.delete(intent.item).expect("Failed to delete entity");
             } else {

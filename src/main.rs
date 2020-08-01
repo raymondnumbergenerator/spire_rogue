@@ -6,9 +6,9 @@ mod util;
 mod gui;
 mod gamelog;
 mod map;
-pub use map::Map;
+use map::Map;
 mod player;
-pub use player::*;
+use player::*;
 
 mod cards;
 mod deck;
@@ -20,15 +20,7 @@ mod status;
 mod components;
 pub use components::*;
 
-mod game_systems;
-use game_systems::damage::DamageSystem;
-use game_systems::end_turn::EndTurnSystem;
-use game_systems::inventory::InventorySystem;
-use game_systems::inventory::ItemUseSystem;
-use game_systems::map_index::MapIndexSystem;
-use game_systems::melee_combat::MeleeCombatSystem;
-use game_systems::monster::MonsterSystem;
-use game_systems::visibility::VisibilitySystem;
+mod systems;
 
 pub const WINDOWWIDTH: usize = 80;
 pub const WINDOWHEIGHT: usize = 50;
@@ -51,23 +43,25 @@ pub struct State {
 
 impl State {
     fn run_systems(&mut self) {
-        let mut visibility_sys = VisibilitySystem{};
+        let mut visibility_sys = systems::VisibilitySystem{};
         visibility_sys.run_now(&self.ecs);
-        let mut monster_sys = MonsterSystem{};
-        monster_sys.run_now(&self.ecs);
-        let mut map_sys = MapIndexSystem{};
-        map_sys.run_now(&self.ecs);
-        let mut inventory_sys = InventorySystem{};
+        let mut inventory_sys = systems::InventorySystem{};
         inventory_sys.run_now(&self.ecs);
-        let mut item_use_sys = ItemUseSystem{};
+        let mut item_use_sys = systems::ItemUseSystem{};
         item_use_sys.run_now(&self.ecs);
-        let mut melee_combat_sys = MeleeCombatSystem{};
+        let mut monster_sys = systems::MonsterSystem{};
+        monster_sys.run_now(&self.ecs);
+        let mut melee_combat_sys = systems::MeleeCombatSystem{};
         melee_combat_sys.run_now(&self.ecs);
-        let mut damage_sys = DamageSystem{};
+        let mut damage_sys = systems::DamageSystem{};
         damage_sys.run_now(&self.ecs);
-        let mut end_turn_sys = EndTurnSystem{};
+        let mut cleanup_sys = systems::DeadCleanupSystem{};
+        cleanup_sys.run_now(&self.ecs);
+        let mut end_turn_sys = systems::EndTurnSystem{};
         end_turn_sys.run_now(&self.ecs);
         self.ecs.maintain();
+        let mut map_sys = systems::MapIndexSystem{};
+        map_sys.run_now(&self.ecs);
     }
 }
 
@@ -198,7 +192,6 @@ impl GameState for State {
             let mut runwriter = self.ecs.write_resource::<RunState>();
             *runwriter = newrunstate;
         }
-        game_systems::damage::delete_dead(&mut self.ecs);
     }
 }
 
