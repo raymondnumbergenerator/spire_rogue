@@ -95,8 +95,7 @@ checksum = "0d8c1fef690941d3e7788d328517591fecc684c084084702d6ff1641e993699a"
 [[package]]
 name = "bracket-algorithm-traits"
 version = "0.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bec021d386ba4c891ee752738869465aa679b5902c6bcc93ca55532d9a33ab73"
+source = "git+https://github.com/thebracket/bracket-lib/#57a2c13282df592c86ac680441d2c2197ee053a8"
 dependencies = [
  "bracket-geometry",
  "smallvec 1.4.1",
@@ -116,8 +115,7 @@ dependencies = [
 [[package]]
 name = "bracket-geometry"
 version = "0.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ec613acfe65a809f03d57e2cc8ab97f9c396ddb9929e784bc19b87dd5ccf358"
+source = "git+https://github.com/thebracket/bracket-lib/#57a2c13282df592c86ac680441d2c2197ee053a8"
 dependencies = [
  "ultraviolet",
 ]
