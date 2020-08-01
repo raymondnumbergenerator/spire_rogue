@@ -4,7 +4,7 @@ use rltk::{RGB};
 use super::super::{
     Name, Position, Renderable,
     Item, Card, Targeted,
-    GainBlock, DealDamage, status
+    effects, status
 };
 
 fn strike(ecs: &mut World) -> Entity {
@@ -12,7 +12,7 @@ fn strike(ecs: &mut World) -> Entity {
         .with(Name{ name: "Strike".to_string() })
         .with(Item{})
         .with(Card{ energy_cost: 1 })
-        .with(DealDamage{ amount: 6 })
+        .with(effects::DealDamage{ amount: 6 })
         .with(Targeted{ range: 2 })
         .build()
 }
@@ -22,7 +22,7 @@ fn defend(ecs: &mut World) -> Entity {
         .with(Name{ name: "Defend".to_string() })
         .with(Item{})
         .with(Card{ energy_cost: 1 })
-        .with(GainBlock{ amount: 5 })
+        .with(effects::GainBlock{ amount: 5 })
         .build()
 }
 
@@ -31,7 +31,7 @@ fn bash(ecs: &mut World) -> Entity {
         .with(Name{ name: "Bash".to_string() })
         .with(Item{})
         .with(Card{ energy_cost: 2 })
-        .with(DealDamage{ amount: 8 })
+        .with(effects::DealDamage{ amount: 8 })
         .with(status::Vulnerable{ turns: 2 })
         .with(Targeted{ range: 2 })
         .build()

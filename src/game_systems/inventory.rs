@@ -1,9 +1,9 @@
 use specs::prelude::*;
 use super::super::{
     Position, Name, Player, CombatStats, SufferDamage,
-    intent, InBackpack,
+    intent, InBackpack, AreaOfEffect,
     gamelog::GameLog, Map, deck::Deck, Card, Potion,
-    GainBlock, DealDamage, AreaOfEffect, status
+    effects, status
 };
 
 pub struct InventorySystem {}
@@ -21,24 +21,24 @@ impl<'a> System<'a> for InventorySystem {
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (mut log, names, mut positions, potions, mut wants_pickup, mut backpack, mut deck) = data;
+        let (mut log, names, mut positions, potions, mut intent_pickup, mut backpack, mut deck) = data;
 
-        for pickup in wants_pickup.join() {
-            positions.remove(pickup.item);
+        for intent in intent_pickup.join() {
+            positions.remove(intent.item);
             // Gain potions
-            if let Some(_) = potions.get(pickup.item) {
-                backpack.insert(pickup.item, InBackpack{ owner: pickup.collected_by }).expect("Unable to pickup item");
-                log.push(format!("You pick up the {}.", names.get(pickup.item).unwrap().name));
+            if let Some(_) = potions.get(intent.item) {
+                backpack.insert(intent.item, InBackpack{ owner: intent.collected_by }).expect("Unable to pickup item");
+                log.push(format!("You pick up the {}.", names.get(intent.item).unwrap().name));
             }
             // Gain cards
             else {
-                deck.gain_card(pickup.item);
-                log.push(format!("You gain {}.", names.get(pickup.item).unwrap().name));
+                deck.gain_card(intent.item);
+                log.push(format!("You gain {}.", names.get(intent.item).unwrap().name));
             }
 
         }
 
-        wants_pickup.clear();
+        intent_pickup.clear();
     }
 }
 
@@ -57,16 +57,16 @@ impl<'a> System<'a> for ItemUseSystem {
         WriteStorage<'a, CombatStats>,
         WriteStorage<'a, SufferDamage>,
         ReadStorage<'a, AreaOfEffect>,
-        ReadStorage<'a, GainBlock>,
-        ReadStorage<'a, DealDamage>,
+        ReadStorage<'a, effects::GainBlock>,
+        ReadStorage<'a, effects::DealDamage>,
         WriteStorage<'a, status::Weak>,
         WriteStorage<'a, status::Vulnerable>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
         let (player_entity, mut log, entities, mut player, map, names, 
-            potions, mut deck, card, mut intent_use, mut combat_stats, mut suffer_damage,
-            aoe, gainblock, dealdamage, mut status_weak, mut status_vulnerable) = data;
+            potions, mut deck, card, mut intent_use, mut combat_stats, mut suffer_damage, aoe,
+            effect_gain_block, effect_deal_damage, mut status_weak, mut status_vulnerable) = data;
 
         for (entity, intent) in (&entities, &intent_use).join() {
             // Determine affected targets
@@ -97,7 +97,7 @@ impl<'a> System<'a> for ItemUseSystem {
             }
 
             // Apply gain block to affected targets
-            if let Some(item) = gainblock.get(intent.item) {
+            if let Some(item) = effect_gain_block.get(intent.item) {
                 for target in targets.iter() {
                     if let Some(stats) = combat_stats.get_mut(*target) {
                         stats.block = stats.block + item.amount;
@@ -109,7 +109,7 @@ impl<'a> System<'a> for ItemUseSystem {
             }
 
             // Deal damage to affected targets
-            if let Some(item) = dealdamage.get(intent.item) {
+            if let Some(item) = effect_deal_damage.get(intent.item) {
                 for target in targets.iter() {
                     let mut dmg = item.amount;
 

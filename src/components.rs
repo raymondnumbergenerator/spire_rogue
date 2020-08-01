@@ -61,31 +61,6 @@ pub struct Card {
 #[derive(Component, Debug)]
 pub struct Potion {}
 
-#[derive(Component, Debug)]
-pub struct GainBlock {
-    pub amount: i32
-}
-
-#[derive(Component, Debug)]
-pub struct DealDamage {
-    pub amount: i32
-}
-
-// #[derive(Component, Debug)]
-// pub struct StatusWeak {
-//     pub turns: i32
-// }
-
-// #[derive(Component, Debug)]
-// pub struct StatusVulnerable {
-//     pub turns: i32
-// }
-
-#[derive(Component,Debug)]
-pub struct DiscardCard {
-    pub number: i32
-}
-
 #[derive(Component, Debug, Clone)]
 pub struct InBackpack {
     pub owner: Entity
@@ -110,7 +85,7 @@ impl SufferDamage {
         if let Some(suffering) = store.get_mut(victim) {
             suffering.amount.push(amount);
         } else {
-            let dmg = SufferDamage { amount: vec![amount] };
+            let dmg = SufferDamage{ amount: vec![amount] };
             store.insert(victim, dmg).expect("Unable to insert damage");
         }
     }

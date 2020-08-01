@@ -58,7 +58,7 @@ fn get_item(ecs: &mut World) {
     // Pickup the item under the player
     if let Some(target_item) = target_item {
         let mut intent = ecs.write_storage::<intent::PickupItem>();
-        intent.insert(*player_entity, intent::PickupItem{ collected_by: *player_entity, item: target_item }).expect("Unable to insert wanttopickup");
+        intent.insert(*player_entity, intent::PickupItem{ collected_by: *player_entity, item: target_item }).expect("Unable to insert intent::PickupItem");
     }
 }
 

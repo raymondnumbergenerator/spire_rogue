@@ -3,8 +3,8 @@ use rltk::{RGB, RandomNumberGenerator};
 
 use super::{
     Position, Name, Renderable, Player, CombatStats,
-    Viewshed, Monster, BlocksTile,
-    Potion, Item, GainBlock, DealDamage, Targeted, AreaOfEffect,
+    Viewshed, Monster, BlocksTile, effects,
+    Potion, Item, Targeted, AreaOfEffect,
     util::rect::Rect, map::MAPWIDTH,
 };
 
@@ -36,7 +36,7 @@ fn potion_block(ecs: &mut World, x: i32, y: i32) {
         .with(Name{ name: "Block Potion".to_string() })
         .with(Item{})
         .with(Potion{})
-        .with(GainBlock{ amount: 12 })
+        .with(effects::GainBlock{ amount: 12 })
         .build();
 }
 
@@ -53,7 +53,7 @@ fn potion_fire(ecs: &mut World, x: i32, y: i32) {
         .with(Item{})
         .with(Potion{})
         .with(Targeted{ range: 3 })
-        .with(DealDamage{ amount: 20 })
+        .with(effects::DealDamage{ amount: 20 })
         .build();
 }
 
@@ -70,7 +70,7 @@ fn potion_explosive(ecs: &mut World, x: i32, y: i32) {
         .with(Item{})
         .with(Potion{})
         .with(Targeted{ range: 5 })
-        .with(DealDamage{ amount: 10 })
+        .with(effects::DealDamage{ amount: 10 })
         .with(AreaOfEffect{ radius: 1 })
         .build();
 }
