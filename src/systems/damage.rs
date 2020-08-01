@@ -61,7 +61,6 @@ impl<'a>System<'a> for DeadCleanupSystem {
 
         for victim in dead {
             entities.delete(victim).expect("Unable to delete");
-            println!("entity deleted");
         }
     }
 }

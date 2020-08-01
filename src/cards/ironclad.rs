@@ -1,9 +1,9 @@
 use specs::prelude::*;
-use rltk::{RGB};
+use rltk::{RGB, RandomNumberGenerator};
 
 use super::super::{
     Name, Position, Renderable,
-    Item, Card, Targeted,
+    Item, Card, Targeted, AreaOfEffect,
     effects, status
 };
 
@@ -35,6 +35,74 @@ fn bash(ecs: &mut World) -> Entity {
         .with(status::Vulnerable{ turns: 2 })
         .with(Targeted{ range: 2 })
         .build()
+}
+
+fn clothesline(ecs: &mut World, x: i32, y: i32) -> Entity {
+    ecs.create_entity()
+        .with(Name{ name: "Clothesline".to_string() })
+        .with(Item{})
+        .with(Card{ energy_cost: 2 })
+        .with(effects::DealDamage{ amount: 12 })
+        .with(status::Weak{ turns: 2 })
+        .with(Targeted{ range: 2 })
+        .with(Position{ x, y })
+        .with(Renderable{
+            glyph: rltk::to_cp437('='),
+            fg: RGB::named(rltk::ORANGE),
+            bg: RGB::named(rltk::BLACK),
+            render_order: 2,
+        })
+        .build()
+}
+
+fn cleave(ecs: &mut World, x: i32, y: i32) -> Entity {
+    ecs.create_entity()
+        .with(Name{ name: "Cleave".to_string() })
+        .with(Item{})
+        .with(Card{ energy_cost: 1 })
+        .with(effects::DealDamage{ amount: 8 })
+        .with(AreaOfEffect{ radius: 3 })
+        .with(Targeted{ range: 0 })
+        .with(Position{ x, y })
+        .with(Renderable{
+            glyph: rltk::to_cp437('='),
+            fg: RGB::named(rltk::ORANGE),
+            bg: RGB::named(rltk::BLACK),
+            render_order: 2,
+        })
+        .build()
+}
+
+fn pommel_strike(ecs: &mut World, x: i32, y: i32) -> Entity {
+    ecs.create_entity()
+        .with(Name{ name: "Pommel Strike".to_string() })
+        .with(Item{})
+        .with(Card{ energy_cost: 1 })
+        .with(effects::DealDamage{ amount: 8 })
+        .with(Targeted{ range: 2 })
+        .with(effects::DrawCard{ number: 1 })
+        .with(Position{ x, y })
+        .with(Renderable{
+            glyph: rltk::to_cp437('='),
+            fg: RGB::named(rltk::ORANGE),
+            bg: RGB::named(rltk::BLACK),
+            render_order: 2,
+        })
+        .build()
+}
+
+pub fn random_card(ecs: &mut World, x: i32, y: i32) {
+    let roll: i32;
+    {
+        let mut rng = ecs.write_resource::<RandomNumberGenerator>();
+        roll = rng.roll_dice(1, 3);
+    }
+
+    match roll {
+        1 => { clothesline(ecs, x, y); }
+        2 => { cleave(ecs, x, y); }
+        _ => { pommel_strike(ecs, x, y); }
+    }
 }
 
 pub fn starter(ecs: &mut World) -> Vec<Entity> {

@@ -11,7 +11,12 @@ pub struct GainBlock {
     pub amount: i32
 }
 
-#[derive(Component,Debug)]
+#[derive(Component, Debug)]
 pub struct DiscardCard {
+    pub number: i32
+}
+
+#[derive(Component, Debug)]
+pub struct DrawCard {
     pub number: i32
 }

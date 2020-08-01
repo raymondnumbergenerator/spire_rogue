@@ -1,7 +1,7 @@
 use specs::prelude::*;
 use super::super::{
-    Name, Player, CombatStats, SufferDamage, gamelog::GameLog,
-    intent, AreaOfEffect, Map,
+    Name, Player, Monster, CombatStats, gamelog::GameLog,
+    intent, AreaOfEffect, Map, SufferDamage,
     deck::Deck, Card, Potion,
     effects, status
 };
@@ -14,6 +14,7 @@ impl<'a> System<'a> for ItemUseSystem {
         WriteExpect<'a, GameLog>,
         Entities<'a>,
         WriteStorage<'a, Player>,
+        ReadStorage<'a, Monster>,
         ReadExpect<'a, Map>,
         ReadStorage<'a, Name>,
         ReadStorage<'a, Potion>,
@@ -27,12 +28,14 @@ impl<'a> System<'a> for ItemUseSystem {
         ReadStorage<'a, effects::DealDamage>,
         WriteStorage<'a, status::Weak>,
         WriteStorage<'a, status::Vulnerable>,
+        ReadStorage<'a, effects::DrawCard>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (player_entity, mut log, entities, mut player, map, names, 
+        let (player_entity, mut log, entities, mut player, monsters, map, names, 
             potions, mut deck, cards, mut intent_use, mut combat_stats, mut suffer_damage, aoe,
-            effect_gain_block, effect_deal_damage, mut status_weak, mut status_vulnerable) = data;
+            effect_gain_block, effect_deal_damage, mut status_weak, mut status_vulnerable,
+            effect_draw) = data;
 
         for (entity, intent) in (&entities, &intent_use).join() {
             // Determine affected targets
@@ -54,7 +57,7 @@ impl<'a> System<'a> for ItemUseSystem {
                             for tile_idx in aoe_tiles.iter() {
                                 let idx = map.xy_idx(tile_idx.x, tile_idx.y);
                                 for mob in map.tile_content[idx].iter() {
-                                    targets.push(*mob);
+                                    if let Some(_) = monsters.get(*mob) { targets.push(*mob); }
                                 }
                             }
                         }
@@ -134,6 +137,15 @@ impl<'a> System<'a> for ItemUseSystem {
                         already_affected.turns += target.1;
                     } else {
                         status_vulnerable.insert(target.0, status::Vulnerable{ turns: target.1 }).expect("Unable to insert status");
+                    }
+                }
+            }
+
+            // Draw cards
+            {
+                if let Some(item) = effect_draw.get(intent.item) {
+                    for _ in 0 .. item.number {
+                        deck.draw();
                     }
                 }
             }

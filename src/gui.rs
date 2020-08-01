@@ -14,6 +14,19 @@ const INVENTORYWIDTH: usize = 25;
 const INVENTORYPOS: usize = MAPWIDTH - INVENTORYWIDTH - 1;
 
 #[derive(PartialEq, Copy, Clone)]
+pub enum MainMenuSelection {
+    NewGame,
+    LoadGame,
+    Quit,
+}
+
+#[derive(PartialEq, Copy, Clone)]
+pub enum MainMenuresult {
+    NoSelection{ selected: MainMenuSelection },
+    Selected{ selected: MainMenuSelection },
+}
+
+#[derive(PartialEq, Copy, Clone)]
 pub enum ItemMenuResult {
     Cancel,
     NoResponse,
@@ -131,11 +144,13 @@ pub fn ranged_target(ecs: &World, ctx: &mut Rltk, range: i32, radius: i32) -> (I
     }
 
     // Highlight radius for aoe attacks
-    if let Some(visible) = viewsheds.get(*player_entity) {
-        for idx in visible.visible_tiles.iter() {
-            let dist = rltk::DistanceAlg::Pythagoras.distance2d(mouse_point, *idx);
-            if dist <= radius as f32 {
-                ctx.set_bg(idx.x, idx.y, RGB::named(rltk::CYAN));
+    if available_cells.contains(&&mouse_point) {
+        if let Some(visible) = viewsheds.get(*player_entity) {
+            for idx in visible.visible_tiles.iter() {
+                let dist = rltk::DistanceAlg::Pythagoras.distance2d(mouse_point, *idx);
+                if dist <= radius as f32 {
+                    ctx.set_bg(idx.x, idx.y, RGB::named(rltk::CYAN));
+                }
             }
         }
     }

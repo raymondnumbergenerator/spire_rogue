@@ -4,7 +4,7 @@ use rltk::{RGB, RandomNumberGenerator};
 use super::{
     Position, Name, Renderable, Player, CombatStats,
     Viewshed, Monster, BlocksTile, effects,
-    Potion, Item, Targeted, AreaOfEffect,
+    cards, Potion, Item, Targeted, AreaOfEffect,
     util::rect::Rect, map::MAPWIDTH,
 };
 
@@ -141,13 +141,15 @@ pub fn random_potion(ecs: &mut World, x: i32, y: i32) {
 pub fn spawn_room(ecs: &mut World, room: &Rect) {
     let mut monster_spawn_points: Vec<usize> = Vec::new();
     let mut item_spawn_points: Vec<usize> = Vec::new();
+    let mut card_spawn_points: Vec<usize> = Vec::new();
     {
         let mut rng = ecs.write_resource::<RandomNumberGenerator>();
-        let num_monsters = rng.range(0, 2);
-        let num_items = rng.range(0, 4);
+        let num_monsters = rng.range(0, 3);
+        let num_items = rng.range(0, 2);
+        let num_cards = rng.range(0, 4);
 
         // Decide monster spawn points
-        for _i in 0 .. num_monsters {
+        for _ in 0 .. num_monsters {
             let mut added = false;
             while !added {
                 let x = (room.x1 + rng.roll_dice(1, i32::abs(room.x2 - room.x1))) as usize;
@@ -161,7 +163,7 @@ pub fn spawn_room(ecs: &mut World, room: &Rect) {
         }
 
         // Decide item spawn points
-        for _i in 0 .. num_items {
+        for _ in 0 .. num_items {
             let mut added = false;
             while !added {
                 let x = (room.x1 + rng.roll_dice(1, i32::abs(room.x2 - room.x1))) as usize;
@@ -169,6 +171,20 @@ pub fn spawn_room(ecs: &mut World, room: &Rect) {
                 let idx = (y * MAPWIDTH) + x;
                 if !item_spawn_points.contains(&idx) {
                     item_spawn_points.push(idx);
+                    added = true;
+                }
+            }
+        }
+
+        // Decide card spawn points
+        for _ in 0 .. num_cards {
+            let mut added = false;
+            while !added {
+                let x = (room.x1 + rng.roll_dice(1, i32::abs(room.x2 - room.x1))) as usize;
+                let y = (room.y1 + rng.roll_dice(1, i32::abs(room.y2 - room.y1))) as usize;
+                let idx = (y * MAPWIDTH) + x;
+                if !card_spawn_points.contains(&idx) {
+                    card_spawn_points.push(idx);
                     added = true;
                 }
             }
@@ -187,6 +203,13 @@ pub fn spawn_room(ecs: &mut World, room: &Rect) {
         let x = *idx % MAPWIDTH;
         let y = *idx / MAPWIDTH;
         random_potion(ecs, x as i32, y as i32)
+    }
+
+    // Spawn cards
+    for idx in card_spawn_points.iter() {
+        let x = *idx % MAPWIDTH;
+        let y = *idx / MAPWIDTH;
+        cards::ironclad::random_card(ecs, x as i32, y as i32)
     }
 
 }

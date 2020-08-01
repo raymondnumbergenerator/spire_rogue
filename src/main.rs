@@ -35,6 +35,7 @@ pub enum RunState {
     ShowInventory,
     ShowHand,
     ShowTargeting { range: i32, radius: i32, item: Entity },
+    // MainMenu { menu_selection: gui::MainMenuSelection }
 }
 
 pub struct State {
@@ -226,6 +227,7 @@ fn main() -> rltk::BError {
     gs.ecs.register::<effects::DealDamage>();
     gs.ecs.register::<effects::GainBlock>();
     gs.ecs.register::<effects::DiscardCard>();
+    gs.ecs.register::<effects::DrawCard>();
     gs.ecs.register::<intent::UseItem>();
     gs.ecs.register::<intent::PickupItem>();
     gs.ecs.register::<intent::MeleeTarget>();
