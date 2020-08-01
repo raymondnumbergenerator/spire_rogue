@@ -1,5 +1,5 @@
 use specs::prelude::*;
-use super::super::{CombatStats, WantsToMelee, Name, SufferDamage, StatusWeak, gamelog::GameLog};
+use super::super::{CombatStats, intent, Name, SufferDamage, status, gamelog::GameLog};
 
 pub struct MeleeCombatSystem {}
 
@@ -7,21 +7,21 @@ impl<'a> System<'a> for MeleeCombatSystem {
     type SystemData = (
         Entities<'a>,
         WriteExpect<'a, GameLog>,
-        WriteStorage<'a, WantsToMelee>,
+        WriteStorage<'a, intent::MeleeTarget>,
         ReadStorage<'a, Name>,
         ReadStorage<'a, CombatStats>,
         WriteStorage<'a, SufferDamage>,
-        WriteStorage<'a, StatusWeak>,
+        WriteStorage<'a, status::Weak>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, mut log, mut wants_melee, names, combat_stats, mut suffer_damage, mut statusweak) = data;
+        let (entities, mut log, mut intent_melee, names, combat_stats, mut suffer_damage, mut statusweak) = data;
 
-        for (ent, wants_melee, name, stats) in (&entities, &wants_melee, &names, &combat_stats).join() {
+        for (ent, intent_melee, name, stats) in (&entities, &intent_melee, &names, &combat_stats).join() {
             if stats.hp > 0 {
-                let target_stats = combat_stats.get(wants_melee.target).unwrap();
+                let target_stats = combat_stats.get(intent_melee.target).unwrap();
                 if target_stats.hp > 0 {
-                    let target_name = names.get(wants_melee.target).unwrap();
+                    let target_name = names.get(intent_melee.target).unwrap();
                     let mut damage = i32::max(0, stats.atk);
 
                     // Check for status: weak
@@ -30,11 +30,11 @@ impl<'a> System<'a> for MeleeCombatSystem {
                     }
 
                     log.push(format!("{} hits {} for {} damage.", &name.name, &target_name.name, damage));
-                    SufferDamage::new_damage(&mut suffer_damage, wants_melee.target, damage);
+                    SufferDamage::new_damage(&mut suffer_damage, intent_melee.target, damage);
                 }
             }
         }
 
-        wants_melee.clear();
+        intent_melee.clear();
     }
 }

@@ -26,39 +26,22 @@ fn defend(ecs: &mut World) -> Entity {
         .build()
 }
 
-fn neutralize(ecs: &mut World) -> Entity {
+fn bash(ecs: &mut World) -> Entity {
     ecs.create_entity()
-        .with(Name{ name: "Neutralize".to_string() })
+        .with(Name{ name: "Bash".to_string() })
         .with(Item{})
-        .with(Card{ energy_cost: 0 })
-        .with(DealDamage{ amount: 3 })
-        .with(status::Weak{ turns: 1 })
+        .with(Card{ energy_cost: 2 })
+        .with(DealDamage{ amount: 8 })
+        .with(status::Vulnerable{ turns: 2 })
         .with(Targeted{ range: 2 })
-        .build()
-}
-
-pub fn slice(ecs: &mut World, x: i32, y: i32) -> Entity {
-    ecs.create_entity()
-        .with(Name{ name: "Slice".to_string() })
-        .with(Item{})
-        .with(Card{ energy_cost: 0 })
-        .with(DealDamage{ amount: 5 })
-        .with(Targeted{ range: 2 })
-        .with(Position{ x, y })
-        .with(Renderable{
-            glyph: rltk::to_cp437('='),
-            fg: RGB::named(rltk::ORANGE),
-            bg: RGB::named(rltk::BLACK),
-            render_order: 2,
-        })
         .build()
 }
 
 pub fn starter(ecs: &mut World) -> Vec<Entity> {
     let mut init_deck = Vec::new();
     for _ in 0..5 { init_deck.push(strike(ecs)); }
-    for _ in 0..5 { init_deck.push(defend(ecs)); }
-    init_deck.push(neutralize(ecs));
+    for _ in 0..4 { init_deck.push(defend(ecs)); }
+    init_deck.push(bash(ecs));
 
     init_deck
 }

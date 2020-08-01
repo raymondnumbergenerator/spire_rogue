@@ -71,26 +71,24 @@ pub struct DealDamage {
     pub amount: i32
 }
 
-#[derive(Component, Debug)]
-pub struct StatusWeak {
-    pub turns: i32
+// #[derive(Component, Debug)]
+// pub struct StatusWeak {
+//     pub turns: i32
+// }
+
+// #[derive(Component, Debug)]
+// pub struct StatusVulnerable {
+//     pub turns: i32
+// }
+
+#[derive(Component,Debug)]
+pub struct DiscardCard {
+    pub number: i32
 }
 
 #[derive(Component, Debug, Clone)]
 pub struct InBackpack {
     pub owner: Entity
-}
-
-#[derive(Component, Debug, Clone)]
-pub struct WantsToPickupItem {
-    pub collected_by: Entity,
-    pub item: Entity,
-}
-
-#[derive(Component, Debug, Clone)]
-pub struct WantsToUseItem {
-    pub item: Entity,
-    pub target: Option<rltk::Point>,
 }
 
 #[derive(Component, Debug)]
@@ -101,11 +99,6 @@ pub struct Player {
 
 #[derive(Component, Debug)]
 pub struct Monster {}
-
-#[derive(Component, Debug, Clone)]
-pub struct WantsToMelee {
-    pub target: Entity
-}
 
 #[derive(Component, Debug)]
 pub struct SufferDamage {

@@ -1,9 +1,9 @@
 use specs::prelude::*;
 use super::super::{
     Position, Name, Player, CombatStats, SufferDamage,
-    WantsToPickupItem, WantsToUseItem, InBackpack,
-    gamelog::GameLog, Map,
-    deck::Deck, Card, Potion, GainBlock, DealDamage, AreaOfEffect, StatusWeak
+    intent, InBackpack,
+    gamelog::GameLog, Map, deck::Deck, Card, Potion,
+    GainBlock, DealDamage, AreaOfEffect, status
 };
 
 pub struct InventorySystem {}
@@ -15,7 +15,7 @@ impl<'a> System<'a> for InventorySystem {
         ReadStorage<'a, Name>,
         WriteStorage<'a, Position>,
         ReadStorage<'a, Potion>,
-        WriteStorage<'a, WantsToPickupItem>,
+        WriteStorage<'a, intent::PickupItem>,
         WriteStorage<'a, InBackpack>,
         WriteExpect<'a, Deck>,
     );
@@ -53,27 +53,28 @@ impl<'a> System<'a> for ItemUseSystem {
         ReadStorage<'a, Potion>,
         WriteExpect<'a, Deck>,
         ReadStorage<'a, Card>,
-        WriteStorage<'a, WantsToUseItem>,
+        WriteStorage<'a, intent::UseItem>,
         WriteStorage<'a, CombatStats>,
         WriteStorage<'a, SufferDamage>,
         ReadStorage<'a, AreaOfEffect>,
         ReadStorage<'a, GainBlock>,
         ReadStorage<'a, DealDamage>,
-        WriteStorage<'a, StatusWeak>,
+        WriteStorage<'a, status::Weak>,
+        WriteStorage<'a, status::Vulnerable>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
         let (player_entity, mut log, entities, mut player, map, names, 
-            potions, mut deck, card, mut wants_use, mut combat_stats, mut suffer_damage,
-            aoe, gainblock, dealdamage, mut statusweak) = data;
+            potions, mut deck, card, mut intent_use, mut combat_stats, mut suffer_damage,
+            aoe, gainblock, dealdamage, mut status_weak, mut status_vulnerable) = data;
 
-        for (entity, using) in (&entities, &wants_use).join() {
+        for (entity, intent) in (&entities, &intent_use).join() {
             // Determine affected targets
             let mut targets: Vec<Entity> = Vec::new();
-            match using.target {
+            match intent.target {
                 None => { targets.push(*player_entity); }
                 Some(target) => {
-                    let area_effect = aoe.get(using.item);
+                    let area_effect = aoe.get(intent.item);
                     match area_effect {
                         None => {
                             let idx = map.xy_idx(target.x, target.y);
@@ -96,56 +97,92 @@ impl<'a> System<'a> for ItemUseSystem {
             }
 
             // Apply gain block to affected targets
-            if let Some(item) = gainblock.get(using.item) {
+            if let Some(item) = gainblock.get(intent.item) {
                 for target in targets.iter() {
                     if let Some(stats) = combat_stats.get_mut(*target) {
                         stats.block = stats.block + item.amount;
                     }
                     if entity == *player_entity {
-                        log.push(format!("You use {} and gain {} block.", names.get(using.item).unwrap().name, item.amount))
+                        log.push(format!("You use {} and gain {} block.", names.get(intent.item).unwrap().name, item.amount))
                     }
                 }
             }
 
             // Deal damage to affected targets
-            if let Some(item) = dealdamage.get(using.item) {
+            if let Some(item) = dealdamage.get(intent.item) {
                 for target in targets.iter() {
-                    SufferDamage::new_damage(&mut suffer_damage, *target, item.amount);
+                    let mut dmg = item.amount;
+
+                    // Check for status: vulnerable
+                    if let Some(_) = status_vulnerable.get_mut(*target) {
+                        dmg = (dmg as f32 * 1.5) as i32;
+                        println!("{}", dmg);
+                    }
+
+                    SufferDamage::new_damage(&mut suffer_damage, *target, dmg);
                     if entity == *player_entity {
                         log.push(format!("You use {} on {} for {} damage.",
-                            names.get(using.item).unwrap().name,
+                            names.get(intent.item).unwrap().name,
                             names.get(*target).unwrap().name,
-                            item.amount))
+                            dmg))
                     }
                 }
             }
 
             // Apply weak to affected targets
-            let mut apply_weak = Vec::new();
-            if let Some(item) = statusweak.get(using.item) {
-                for target in targets.iter() {
-                    apply_weak.push((*target, item.turns));
-                    if entity == *player_entity {
-                        log.push(format!("You apply weak to {} for {} turns.",
-                            names.get(*target).unwrap().name,
-                            item.turns))
+            {
+                let mut affected_targets = Vec::new();
+                if let Some(item) = status_weak.get(intent.item) {
+                    for target in targets.iter() {
+                        affected_targets.push((*target, item.turns));
+                        if entity == *player_entity {
+                            log.push(format!("You apply weak to {} for {} turns.",
+                                names.get(*target).unwrap().name,
+                                item.turns))
+                        }
+                    }
+                }
+                for target in affected_targets.iter() {
+                    if let Some(already_affected) = status_weak.get_mut(target.0) {
+                        already_affected.turns += target.1;
+                    } else {
+                        status_weak.insert(target.0, status::Weak{ turns: target.1 }).expect("Unable to insert status");
                     }
                 }
             }
-            for target in apply_weak.iter() {
-                statusweak.insert(target.0, StatusWeak{ turns: target.1 }).expect("Unable to insert status");
+
+            // Apply vulnerable to affected targets
+            {
+                let mut affected_targets = Vec::new();
+                if let Some(item) = status_vulnerable.get(intent.item) {
+                    for target in targets.iter() {
+                        affected_targets.push((*target, item.turns));
+                        if entity == *player_entity {
+                            log.push(format!("You apply vulnerable to {} for {} turns.",
+                                names.get(*target).unwrap().name,
+                                item.turns))
+                        }
+                    }
+                }
+                for target in affected_targets.iter() {
+                    if let Some(already_affected) = status_vulnerable.get_mut(target.0) {
+                        already_affected.turns += target.1;
+                    } else {
+                        status_vulnerable.insert(target.0, status::Vulnerable{ turns: target.1 }).expect("Unable to insert status");
+                    }
+                }
             }
             
-            if let Some(_) = potions.get(using.item) {
-                entities.delete(using.item).expect("Failed to delete entity");
+            if let Some(_) = potions.get(intent.item) {
+                entities.delete(intent.item).expect("Failed to delete entity");
             } else {
                 if let Some(player_energy) = player.get_mut(*player_entity) {
-                    player_energy.energy -= card.get(using.item).unwrap().energy_cost;
+                    player_energy.energy -= card.get(intent.item).unwrap().energy_cost;
                 }
-                deck.discard(using.item);
+                deck.discard(intent.item);
             }
         }
 
-        wants_use.clear();
+        intent_use.clear();
     }
 }

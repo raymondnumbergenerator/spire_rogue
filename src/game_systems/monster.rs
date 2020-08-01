@@ -1,5 +1,5 @@
 use specs::prelude::*;
-use super::super::{Viewshed, Monster, Map, Position, WantsToMelee, RunState};
+use super::super::{Viewshed, Monster, Map, Position, intent, RunState};
 
 use rltk::{Point};
 
@@ -15,12 +15,12 @@ impl<'a> System<'a> for MonsterSystem {
         WriteStorage<'a, Viewshed>,
         ReadStorage<'a, Monster>,
         WriteStorage<'a, Position>,
-        WriteStorage<'a, WantsToMelee>);
+        WriteStorage<'a, intent::MeleeTarget>);
 
     fn run(&mut self, data : Self::SystemData) {
         let (mut map, player_pos, player_entity,
             runstate, entities, mut viewshed,
-            monster, mut position, mut wants_to_melee) = data;
+            monster, mut position, mut intent_melee) = data;
         
         // Skip if not on monsterturn
         if *runstate != RunState::MonsterTurn { return; }
@@ -29,7 +29,7 @@ impl<'a> System<'a> for MonsterSystem {
             let distance = rltk::DistanceAlg::Pythagoras.distance2d(Point::new(pos.x, pos.y), *player_pos);
             if distance < 1.5 {
                 // Attack the player if in melee range
-                wants_to_melee.insert(ent, WantsToMelee{ target: *player_entity}).expect("Unable to insert attack");
+                intent_melee.insert(ent, intent::MeleeTarget{ target: *player_entity}).expect("Unable to insert attack");
             } else if viewshed.visible_tiles.contains(&*player_pos) {
                 // Move towards the player
                 let path = rltk::a_star_search(

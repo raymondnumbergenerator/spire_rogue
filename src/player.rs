@@ -1,7 +1,7 @@
 use specs::prelude::*;
 use super::{
     Position, Player, State, Map, Viewshed, RunState,
-    Item, WantsToPickupItem,
+    Item, intent,
     deck::Deck
 };
 
@@ -57,8 +57,8 @@ fn get_item(ecs: &mut World) {
 
     // Pickup the item under the player
     if let Some(target_item) = target_item {
-        let mut pickup = ecs.write_storage::<WantsToPickupItem>();
-        pickup.insert(*player_entity, WantsToPickupItem{ collected_by: *player_entity, item: target_item }).expect("Unable to insert wanttopickup");
+        let mut intent = ecs.write_storage::<intent::PickupItem>();
+        intent.insert(*player_entity, intent::PickupItem{ collected_by: *player_entity, item: target_item }).expect("Unable to insert wanttopickup");
     }
 }
 

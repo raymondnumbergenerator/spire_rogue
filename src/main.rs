@@ -16,6 +16,8 @@ mod components;
 pub use components::*;
 mod player;
 pub use player::*;
+mod intent;
+mod status;
 
 mod game_systems;
 use game_systems::damage::DamageSystem;
@@ -143,8 +145,8 @@ impl GameState for State {
                                 item: item_entity
                             };
                         } else {
-                            let mut intent = self.ecs.write_storage::<WantsToUseItem>();
-                            intent.insert(*self.ecs.fetch::<Entity>(), WantsToUseItem{ item: item_entity, target: None }).expect("Unable to insert intent");
+                            let mut intent = self.ecs.write_storage::<intent::UseItem>();
+                            intent.insert(*self.ecs.fetch::<Entity>(), intent::UseItem{ item: item_entity, target: None }).expect("Unable to insert intent");
                             newrunstate = RunState::PlayerTurn;
                         }
                     }
@@ -170,8 +172,8 @@ impl GameState for State {
                                 item: item_entity
                             };
                         } else {
-                            let mut intent = self.ecs.write_storage::<WantsToUseItem>();
-                            intent.insert(*self.ecs.fetch::<Entity>(), WantsToUseItem{ item: item_entity, target: None }).expect("Unable to insert intent");
+                            let mut intent = self.ecs.write_storage::<intent::UseItem>();
+                            intent.insert(*self.ecs.fetch::<Entity>(), intent::UseItem{ item: item_entity, target: None }).expect("Unable to insert intent");
                             newrunstate = RunState::PlayerTurn;
                         }
                     }
@@ -183,8 +185,8 @@ impl GameState for State {
                     gui::ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
                     gui::ItemMenuResult::NoResponse => {},
                     gui::ItemMenuResult::Selected => {
-                        let mut intent = self.ecs.write_storage::<WantsToUseItem>();
-                        intent.insert(*self.ecs.fetch::<Entity>(), WantsToUseItem{ item: item, target: result.1 }).expect("Unable to insert intent");
+                        let mut intent = self.ecs.write_storage::<intent::UseItem>();
+                        intent.insert(*self.ecs.fetch::<Entity>(), intent::UseItem{ item: item, target: result.1 }).expect("Unable to insert intent");
                         newrunstate = RunState::PlayerTurn;
                     }
                 }
@@ -219,19 +221,20 @@ fn main() -> rltk::BError {
     gs.ecs.register::<Name>();
     gs.ecs.register::<BlocksTile>();
     gs.ecs.register::<CombatStats>();
-    gs.ecs.register::<WantsToMelee>();
+    gs.ecs.register::<intent::MeleeTarget>();
+    gs.ecs.register::<intent::PickupItem>();
+    gs.ecs.register::<intent::UseItem>();
     gs.ecs.register::<SufferDamage>();
     gs.ecs.register::<Card>();
     gs.ecs.register::<Item>();
     gs.ecs.register::<Potion>();
     gs.ecs.register::<InBackpack>();
-    gs.ecs.register::<WantsToPickupItem>();
-    gs.ecs.register::<WantsToUseItem>();
     gs.ecs.register::<GainBlock>();
     gs.ecs.register::<DealDamage>();
     gs.ecs.register::<Targeted>();
     gs.ecs.register::<AreaOfEffect>();
-    gs.ecs.register::<StatusWeak>();
+    gs.ecs.register::<status::Weak>();
+    gs.ecs.register::<status::Vulnerable>();
 
     // Register gamelog resource
     gs.ecs.insert(gamelog::GameLog{ entries: Vec::new() });
@@ -254,7 +257,7 @@ fn main() -> rltk::BError {
         draw: Vec::new(),
         discard: Vec::new(),
     };
-    initial_deck.gain_multiple_cards(cards::silent::starter(&mut gs.ecs));
+    initial_deck.gain_multiple_cards(cards::ironclad::starter(&mut gs.ecs));
     for _ in 0..5 {
         initial_deck.draw();
     }

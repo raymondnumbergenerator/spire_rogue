@@ -1,5 +1,5 @@
 use specs::prelude::*;
-use super::super::{Name, Monster, gamelog::GameLog, RunState, CombatStats, StatusWeak};
+use super::super::{Name, Monster, gamelog::GameLog, RunState, CombatStats, status};
 
 pub struct EndTurnSystem {}
 
@@ -12,38 +12,64 @@ impl<'a> System<'a> for EndTurnSystem {
         ReadStorage<'a, Name>,
         ReadStorage<'a, Monster>,
         WriteStorage<'a, CombatStats>,
-        WriteStorage<'a, StatusWeak>,
+        WriteStorage<'a, status::Weak>,
+        WriteStorage<'a, status::Vulnerable>,
     );
 
     fn run(&mut self, data : Self::SystemData) {
-        let (runstate, mut log, entities, player_ent, names, mob, mut stats, mut statusweak) = data;
+        let (runstate, mut log, entities, player_ent, names, mob, mut stats, mut status_weak, mut status_vulnerable) = data;
 
         // Skip if not on endturn
-        let mut turn: bool = false;
+        let turn: bool;
         match *runstate {
             RunState::EndTurn{player_turn} => { turn = player_turn; }
             _ => { return; }
         }
 
-        // Reduce all status effects by a turn
-        let mut to_remove_weak = Vec::new();
-        for (ent, mut weak) in (&entities, &mut statusweak).join() {
-            if turn {
-                if ent == *player_ent { weak.turns -= 1; }
-            } else {
-                if let Some(_) = mob.get(ent) {
-                    weak.turns -= 1;
+        // Decrement weakness turn counter
+        {
+            let mut affected_targets = Vec::new();
+            for (ent, mut weak) in (&entities, &mut status_weak).join() {
+                if turn {
+                    if ent == *player_ent { weak.turns -= 1; }
+                } else {
+                    if let Some(_) = mob.get(ent) {
+                        weak.turns -= 1;
+                    }
+                }
+                if weak.turns < 1 {
+                    affected_targets.push(ent);
                 }
             }
-            if weak.turns < 1 {
-                to_remove_weak.push(ent);
+            for to_remove in affected_targets {
+                if let Some(ent_name) = names.get(to_remove) {
+                    log.push(format!("Weak wears off for {}.", ent_name.name.to_string()));
+                }
+                status_weak.remove(to_remove);
             }
         }
-        for to_remove in to_remove_weak {
-            if let Some(ent_name) = names.get(to_remove) {
-                log.push(format!("Weakness wears off for {}.", ent_name.name.to_string()));
+
+        // Decrement vulnerable turn counter
+        {
+            let mut affected_targets = Vec::new();
+            for (ent, mut vulnerable) in (&entities, &mut status_vulnerable).join() {
+                if turn {
+                    if ent == *player_ent { vulnerable.turns -= 1; }
+                } else {
+                    if let Some(_) = mob.get(ent) {
+                        vulnerable.turns -= 1;
+                    }
+                }
+                if vulnerable.turns < 1 {
+                    affected_targets.push(ent);
+                }
             }
-            statusweak.remove(to_remove);
+            for to_remove in affected_targets {
+                if let Some(ent_name) = names.get(to_remove) {
+                    log.push(format!("Vulnerable wears off for {}.", ent_name.name.to_string()));
+                }
+                status_vulnerable.remove(to_remove);
+            }
         }
 
         // Decay all block

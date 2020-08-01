@@ -5,7 +5,7 @@ use std::char;
 
 use super::{
     CombatStats, Player, Map, Name, Card, Position, InBackpack, Point, Viewshed,
-    deck::Deck, util::utils, gamelog::GameLog,
+    deck::Deck, util::utils, gamelog::GameLog, status,
     map::MAPWIDTH, map::MAPHEIGHT, WINDOWHEIGHT, deck::MAX_HAND_SIZE
 };
 
@@ -25,26 +25,37 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
     let names = ecs.read_storage::<Name>();
     let positions = ecs.read_storage::<Position>();
     let combat_stats = ecs.read_storage::<CombatStats>();
+    let status_weak = ecs.read_storage::<status::Weak>();
+    let status_vulnerable = ecs.read_storage::<status::Vulnerable>();
 
     let mouse_pos = ctx.mouse_pos();
     if mouse_pos.0 >= map.width || mouse_pos.1 >= map.height { return; }
 
     let mut tooltip: Vec<String> = Vec::new();
 
-    // Push name to tooltips for entities with names
-    for (name, position) in (&names, &positions).join() {
+    // Push name to tooltips
+    for (position, name) in (&positions, &names).join() {
         let idx = map.xy_idx(position.x, position.y);
         if position.x == mouse_pos.0 && position.y == mouse_pos.1 && map.visible_tiles[idx] {
             tooltip.push(name.name.to_string());
         }
     }
 
-    // Push combat stats to tooltips for entities with combat stats
-    for (position, combat_stats) in (&positions, &combat_stats).join() {
+    // Push combat stats to tooltips
+    for (position, combat_stat) in (&positions, &combat_stats).join() {
         let idx = map.xy_idx(position.x, position.y);
         if position.x == mouse_pos.0 && position.y == mouse_pos.1 && map.visible_tiles[idx] {
-            tooltip.push(format!("{}/{}", combat_stats.hp, combat_stats.max_hp));
-            tooltip.push(format!("[{}]", combat_stats.block));
+            tooltip.push(format!("{}/{}", combat_stat.hp, combat_stat.max_hp));
+            tooltip.push(format!("[{}]", combat_stat.block));
+        }
+    }
+
+    // Push status effects to tooltips
+    for (position, weak, vulnerable) in (&positions, status_weak.maybe(), status_vulnerable.maybe()).join() {
+        let idx = map.xy_idx(position.x, position.y);
+        if position.x == mouse_pos.0 && position.y == mouse_pos.1 && map.visible_tiles[idx] {
+            if let Some(w) = weak { tooltip.push(format!("W{}", w.turns)); }
+            if let Some(v) = vulnerable { tooltip.push(format!("V{}", v.turns)); }
         }
     }
 
@@ -56,7 +67,7 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
         width += 1;
 
         let mut tooltip_iter = tooltip.iter();
-        let x;
+        let mut x;
         let mut y;
         if mouse_pos.0 > 40 {
             x = mouse_pos.0 - width;
@@ -82,6 +93,19 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
         // Draw entity block
         s = tooltip_iter.next();
         if let Some(s) = s { ctx.print_color(x + hp_len, y, RGB::named(rltk::CYAN), RGB::named(rltk::GREY), s); }
+        y += 1;
+
+        // Draw entity status effects
+        for s in tooltip_iter {
+            let color;
+            match s.chars().next().unwrap() {
+                'V' => { color = RGB::named(rltk::RED); },
+                'W' => { color = RGB::named(rltk::LIGHTBLUE); },
+                _ => { color = RGB::named(rltk::CYAN); }
+            }
+            ctx.print_color(x, y, color, RGB::named(rltk::GREY), s);
+            x += s.len() as i32;
+        }
     }
 }
 
