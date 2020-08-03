@@ -2,8 +2,6 @@
 
 use specs::prelude::*;
 use specs::saveload::{SimpleMarker, SimpleMarkerAllocator};
-use serde;
-use serde_json;
 use rltk::{Rltk, GameState, Point};
 
 mod util;
@@ -15,6 +13,7 @@ use map::Map;
 mod menu;
 mod player;
 use player::*;
+mod saveload;
 
 mod cards;
 mod deck;
@@ -212,10 +211,8 @@ impl GameState for State {
                 }
             }
             RunState::SaveGame => {
-                let data = serde_json::to_string(&*self.ecs.fetch::<Map>()).unwrap();
-                println!("{}", data);
-                newrunstate = RunState::AwaitingInput;
-                // newrunstate = RunState::MainMenu{ menu_selection: menu::MainMenuSelection::LoadGame }
+                saveload::save_game(&mut self.ecs);
+                newrunstate = RunState::MainMenu{ menu_selection : menu::MainMenuSelection::LoadGame };
             }
         }
 
@@ -253,7 +250,8 @@ fn main() -> rltk::BError {
     gs.ecs.register::<InBackpack>();
     gs.ecs.register::<Targeted>();
     gs.ecs.register::<AreaOfEffect>();
-    gs.ecs.register::<SimpleMarker<SerializeMe>>();
+    gs.ecs.register::<SimpleMarker<saveload::SerializeMe>>();
+    gs.ecs.register::<saveload::SerializationHelper>();
 
     gs.ecs.register::<effects::DealDamage>();
     gs.ecs.register::<effects::GainBlock>();
@@ -272,7 +270,7 @@ fn main() -> rltk::BError {
     gs.ecs.insert(rltk::RandomNumberGenerator::new());
 
     // Register serialize marker resource
-    gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
+    gs.ecs.insert(SimpleMarkerAllocator::<saveload::SerializeMe>::new());
 
     // Create map, mark player spawn position
     let map = Map::new_map_rooms_and_corridors();

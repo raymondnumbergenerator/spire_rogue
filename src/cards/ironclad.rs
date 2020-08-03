@@ -3,7 +3,7 @@ use specs::saveload::{SimpleMarker, MarkedBuilder};
 use rltk::{RGB, RandomNumberGenerator};
 
 use super::super::{
-    Name, Position, Renderable, SerializeMe,
+    Name, Position, Renderable, saveload,
     Item, Card, Targeted, AreaOfEffect,
     effects, status
 };
@@ -13,7 +13,7 @@ fn card_builder<S: ToString>(ecs: &mut World, name: S, energy_cost: i32) -> Enti
         .with(Name{ name: name.to_string() })
         .with(Item{})
         .with(Card{ energy_cost })
-        .marked::<SimpleMarker<SerializeMe>>()
+        .marked::<SimpleMarker<saveload::SerializeMe>>()
 }
 
 fn strike(ecs: &mut World) -> Entity {

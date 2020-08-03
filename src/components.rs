@@ -5,8 +5,6 @@ use specs_derive::{Component, ConvertSaveload};
 use serde::{Serialize, Deserialize};
 use rltk::{RGB};
 
-pub struct SerializeMe;
-
 #[derive(Component, ConvertSaveload, Clone)]
 pub struct Position {
     pub x: i32,
