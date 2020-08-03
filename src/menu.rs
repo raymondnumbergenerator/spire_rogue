@@ -25,17 +25,17 @@ pub fn main_menu(ecs: &mut World, ctx: &mut Rltk) -> MainMenuResult {
     let color_unselected = RGB::named(rltk::WHITE);
 
     if let RunState::MainMenu{ menu_selection: selection } = *runstate {
-        let mut y = super::WINDOWHEIGHT - 8;
+        let mut y = super::WINDOWHEIGHT - 10;
 
         let mut selected = color_unselected;
         if let MainMenuSelection::NewGame = selection { selected = color_selected; };
         ctx.print_color(x, y, selected, RGB::named(rltk::BLACK), "New Game");
-        y += 1;
+        y += 2;
         
         let mut selected = color_unselected;
         if let MainMenuSelection::LoadGame = selection { selected = color_selected; };
         ctx.print_color(x, y, selected, RGB::named(rltk::BLACK), "Load Game");
-        y += 1;
+        y += 2;
 
         let mut selected = color_unselected;
         if let MainMenuSelection::Quit = selection { selected = color_selected; };

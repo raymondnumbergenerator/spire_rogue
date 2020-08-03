@@ -96,6 +96,7 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
             VirtualKeyCode::Tab => return RunState::ShowHand,
             VirtualKeyCode::Space => end_turn(&mut gs.ecs),
             VirtualKeyCode::G => get_item(&mut gs.ecs),
+            VirtualKeyCode::Escape => return RunState::SaveGame,
             _ => { return RunState::AwaitingInput }
         }
     }

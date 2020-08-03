@@ -1,4 +1,5 @@
 use specs::prelude::*;
+use serde::{Serialize, Deserialize};
 use rltk::{RGB, Rltk, RandomNumberGenerator, Algorithm2D, BaseMap, Point};
 
 use super::{util::rect::Rect, util::line::line};
@@ -8,12 +9,13 @@ pub const MAPWIDTH: usize = WINDOWWIDTH;
 pub const MAPHEIGHT: usize = WINDOWHEIGHT - GUISIZE;
 // pub const MAPSIZE: usize = MAPHEIGHT * MAPWIDTH;
 
-#[derive(PartialEq, Copy, Clone)]
+#[derive(PartialEq, Copy, Clone, Serialize, Deserialize)]
 pub enum TileType {
     Wall,
     Floor,
 }
 
+#[derive(Default, Serialize, Deserialize, Clone)]
 pub struct Map {
     pub tiles: Vec<TileType>,
     pub rooms: Vec<Rect>,
@@ -22,6 +24,9 @@ pub struct Map {
     pub revealed_tiles: Vec<bool>,
     pub visible_tiles: Vec<bool>,
     pub blocked: Vec<bool>,
+
+    #[serde(skip_serializing)]
+    #[serde(skip_deserializing)]
     pub tile_content: Vec<Vec<Entity>>,
 }
 

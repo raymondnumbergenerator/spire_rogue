@@ -1,50 +1,47 @@
 use specs::prelude::*;
+use specs::saveload::{SimpleMarker, MarkedBuilder};
 use rltk::{RGB, RandomNumberGenerator};
 
 use super::super::{
-    Name, Position, Renderable,
+    Name, Position, Renderable, SerializeMe,
     Item, Card, Targeted, AreaOfEffect,
     effects, status
 };
 
-fn strike(ecs: &mut World) -> Entity {
+fn card_builder<S: ToString>(ecs: &mut World, name: S, energy_cost: i32) -> EntityBuilder {
     ecs.create_entity()
-        .with(Name{ name: "Strike".to_string() })
+        .with(Name{ name: name.to_string() })
         .with(Item{})
-        .with(Card{ energy_cost: 1 })
-        .with(effects::DealDamage{ amount: 6 })
+        .with(Card{ energy_cost })
+        .marked::<SimpleMarker<SerializeMe>>()
+}
+
+fn strike(ecs: &mut World) -> Entity {
+    card_builder(ecs, "Strike", 1)
         .with(Targeted{ range: 2 })
+        .with(effects::DealDamage{ amount: 6 })
         .build()
 }
 
 fn defend(ecs: &mut World) -> Entity {
-    ecs.create_entity()
-        .with(Name{ name: "Defend".to_string() })
-        .with(Item{})
-        .with(Card{ energy_cost: 1 })
+    card_builder(ecs, "Defend", 1)
         .with(effects::GainBlock{ amount: 5 })
         .build()
 }
 
 fn bash(ecs: &mut World) -> Entity {
-    ecs.create_entity()
-        .with(Name{ name: "Bash".to_string() })
-        .with(Item{})
-        .with(Card{ energy_cost: 2 })
+    card_builder(ecs, "Bash", 2)
+        .with(Targeted{ range: 2 })
         .with(effects::DealDamage{ amount: 8 })
         .with(status::Vulnerable{ turns: 2 })
-        .with(Targeted{ range: 2 })
         .build()
 }
 
 fn clothesline(ecs: &mut World, x: i32, y: i32) -> Entity {
-    ecs.create_entity()
-        .with(Name{ name: "Clothesline".to_string() })
-        .with(Item{})
-        .with(Card{ energy_cost: 2 })
+    card_builder(ecs, "Clothesline", 2)
+        .with(Targeted{ range: 2 })
         .with(effects::DealDamage{ amount: 12 })
         .with(status::Weak{ turns: 2 })
-        .with(Targeted{ range: 2 })
         .with(Position{ x, y })
         .with(Renderable{
             glyph: rltk::to_cp437('='),
@@ -56,13 +53,10 @@ fn clothesline(ecs: &mut World, x: i32, y: i32) -> Entity {
 }
 
 fn cleave(ecs: &mut World, x: i32, y: i32) -> Entity {
-    ecs.create_entity()
-        .with(Name{ name: "Cleave".to_string() })
-        .with(Item{})
-        .with(Card{ energy_cost: 1 })
-        .with(effects::DealDamage{ amount: 8 })
-        .with(AreaOfEffect{ radius: 2 })
+    card_builder(ecs, "Cleave", 1)
         .with(Targeted{ range: 0 })
+        .with(AreaOfEffect{ radius: 2 })
+        .with(effects::DealDamage{ amount: 8 })
         .with(Position{ x, y })
         .with(Renderable{
             glyph: rltk::to_cp437('='),
@@ -74,12 +68,9 @@ fn cleave(ecs: &mut World, x: i32, y: i32) -> Entity {
 }
 
 fn pommel_strike(ecs: &mut World, x: i32, y: i32) -> Entity {
-    ecs.create_entity()
-        .with(Name{ name: "Pommel Strike".to_string() })
-        .with(Item{})
-        .with(Card{ energy_cost: 1 })
-        .with(effects::DealDamage{ amount: 8 })
+    card_builder(ecs, "Pommel Strike", 1)
         .with(Targeted{ range: 2 })
+        .with(effects::DealDamage{ amount: 8 })
         .with(effects::DrawCard{ number: 1 })
         .with(Position{ x, y })
         .with(Renderable{

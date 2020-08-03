@@ -1,6 +1,9 @@
-#![windows_subsystem = "windows"]
+// #![windows_subsystem = "windows"]
 
 use specs::prelude::*;
+use specs::saveload::{SimpleMarker, SimpleMarkerAllocator};
+use serde;
+use serde_json;
 use rltk::{Rltk, GameState, Point};
 
 mod util;
@@ -38,7 +41,8 @@ pub enum RunState {
     ShowInventory,
     ShowHand,
     ShowTargeting { range: i32, radius: i32, item: Entity },
-    MainMenu { menu_selection: menu::MainMenuSelection }
+    MainMenu { menu_selection: menu::MainMenuSelection },
+    SaveGame
 }
 
 pub struct State {
@@ -207,6 +211,12 @@ impl GameState for State {
                     }
                 }
             }
+            RunState::SaveGame => {
+                let data = serde_json::to_string(&*self.ecs.fetch::<Map>()).unwrap();
+                println!("{}", data);
+                newrunstate = RunState::AwaitingInput;
+                // newrunstate = RunState::MainMenu{ menu_selection: menu::MainMenuSelection::LoadGame }
+            }
         }
 
         {
@@ -243,6 +253,7 @@ fn main() -> rltk::BError {
     gs.ecs.register::<InBackpack>();
     gs.ecs.register::<Targeted>();
     gs.ecs.register::<AreaOfEffect>();
+    gs.ecs.register::<SimpleMarker<SerializeMe>>();
 
     gs.ecs.register::<effects::DealDamage>();
     gs.ecs.register::<effects::GainBlock>();
@@ -259,6 +270,9 @@ fn main() -> rltk::BError {
 
     // Register rng resource
     gs.ecs.insert(rltk::RandomNumberGenerator::new());
+
+    // Register serialize marker resource
+    gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
 
     // Create map, mark player spawn position
     let map = Map::new_map_rooms_and_corridors();

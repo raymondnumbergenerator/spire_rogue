@@ -1,8 +1,9 @@
 use specs::prelude::*;
+use specs::saveload::{SimpleMarker, MarkedBuilder};
 use rltk::{RGB, RandomNumberGenerator};
 
 use super::{
-    Position, Name, Renderable, Player, CombatStats,
+    Position, Name, Renderable, Player, CombatStats, SerializeMe,
     Viewshed, Monster, BlocksTile, effects,
     cards, Potion, Item, Targeted, AreaOfEffect,
     util::rect::Rect, map::MAPWIDTH,
@@ -17,10 +18,12 @@ pub fn player(ecs: &mut World, x: i32, y: i32) -> Entity {
             bg: RGB::named(rltk::BLACK),
             render_order: 0,
         })
+        .marked::<SimpleMarker<SerializeMe>>()
         .with(Player{ max_energy: 3, energy: 3 })
         .with(Name{ name: "Ironclad".to_string() })
         .with(Viewshed{ visible_tiles: Vec::new(), range: 8, dirty: true })
         .with(CombatStats{ max_hp: 70, hp: 70, def: 0, atk: 6, block: 0 })
+        .marked::<SimpleMarker<SerializeMe>>()
         .build()
 }
 
@@ -37,6 +40,7 @@ fn potion_block(ecs: &mut World, x: i32, y: i32) {
         .with(Item{})
         .with(Potion{})
         .with(effects::GainBlock{ amount: 12 })
+        .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
 
@@ -54,6 +58,7 @@ fn potion_fire(ecs: &mut World, x: i32, y: i32) {
         .with(Potion{})
         .with(Targeted{ range: 3 })
         .with(effects::DealDamage{ amount: 20 })
+        .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
 
@@ -72,6 +77,7 @@ fn potion_explosive(ecs: &mut World, x: i32, y: i32) {
         .with(Targeted{ range: 5 })
         .with(effects::DealDamage{ amount: 10 })
         .with(AreaOfEffect{ radius: 1 })
+        .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
 
@@ -91,6 +97,7 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32,
         .with(Viewshed{ visible_tiles: Vec::new(), range: 8, dirty: true})
         .with(BlocksTile{})
         .with(CombatStats{ max_hp: hp, hp: hp, def: 0, atk: 4, block: 0 })
+        .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
 
