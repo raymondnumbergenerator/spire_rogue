@@ -13,8 +13,9 @@ const SAVE_PATH: &str = "./save.json";
 use super::{
     util::entityvec::EntityVec,
     Map, deck::Deck, Position, Renderable, Viewshed, BlocksTile, Name, CombatStats,
-    Targeted, AreaOfEffect, Item, Card, Potion, InBackpack, Player, Monster, SufferDamage,
-    effects, intent, status};
+    Player, Monster, SufferDamage,
+    effects, item, intent, status
+};
 
 pub struct SerializeMe;
 
@@ -93,10 +94,10 @@ pub fn save_game(ecs: &mut World) {
         let mut serializer = serde_json::Serializer::new(writer);
         serialize_individually!(
             ecs, serializer, data, SerializableMap, SerializableDeck, Position, Renderable, Viewshed,
-            BlocksTile, Name, CombatStats, Targeted, AreaOfEffect, Item, Card, Potion, InBackpack, Player,
-            Monster, SufferDamage,
+            BlocksTile, Name, CombatStats, Player, Monster, SufferDamage,
+            item::Item, item::Card, item::Potion, item::InBackpack, item::Targeted, item::SelfTargeted, item::AreaOfEffect,
             effects::DealDamage, effects::GainBlock, effects::DiscardCard, effects::DrawCard, 
-            intent::UseItem, intent::PickupItem, intent::MeleeTarget,
+            intent::PerformAction, intent::PickupItem, intent::MeleeTarget,
             status::Weak, status::Vulnerable
         );
     }
@@ -123,10 +124,10 @@ pub fn load_game(ecs: &mut World) {
         let mut data = (&mut ecs.entities(), &mut ecs.write_storage::<SimpleMarker<SerializeMe>>(), &mut ecs.write_resource::<SimpleMarkerAllocator<SerializeMe>>());
         deserialize_individually!(
             ecs, deserializer, data, SerializableMap, SerializableDeck, Position, Renderable, Viewshed,
-            BlocksTile, Name, CombatStats, Targeted, AreaOfEffect, Item, Card, Potion, InBackpack, Player,
-            Monster, SufferDamage,
+            BlocksTile, Name, CombatStats, Player, Monster, SufferDamage,
+            item::Item, item::Card, item::Potion, item::InBackpack, item::Targeted, item::SelfTargeted, item::AreaOfEffect,
             effects::DealDamage, effects::GainBlock, effects::DiscardCard, effects::DrawCard, 
-            intent::UseItem, intent::PickupItem, intent::MeleeTarget,
+            intent::PerformAction, intent::PickupItem, intent::MeleeTarget,
             status::Weak, status::Vulnerable
         );
     }
@@ -139,7 +140,7 @@ pub fn load_game(ecs: &mut World) {
         let player = ecs.read_storage::<Player>();
         let position = ecs.read_storage::<Position>();
 
-        // Load map
+        // Load map resource
         for (e, m) in (&entities, &map_helper).join() {
             let mut map = ecs.write_resource::<Map>();
             *map = m.map.clone();
@@ -166,6 +167,6 @@ pub fn load_game(ecs: &mut World) {
     }
 
     for del in to_delete.iter() {
-        ecs.delete_entity(del.unwrap()).expect("Unable to delete");
+        ecs.delete_entity(del.unwrap()).expect("Crashed on cleanup");
     }
 }

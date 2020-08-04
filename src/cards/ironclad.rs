@@ -4,34 +4,34 @@ use rltk::{RGB, RandomNumberGenerator};
 
 use super::super::{
     Name, Position, Renderable, saveload,
-    Item, Card, Targeted, AreaOfEffect,
-    effects, status
+    item, effects, status
 };
 
 fn build_card<S: ToString>(ecs: &mut World, name: S, energy_cost: i32) -> EntityBuilder {
     ecs.create_entity()
         .with(Name{ name: name.to_string() })
-        .with(Item{})
-        .with(Card{ energy_cost })
+        .with(item::Item{})
+        .with(item::Card{ energy_cost })
         .marked::<SimpleMarker<saveload::SerializeMe>>()
 }
 
 fn strike(ecs: &mut World) -> Entity {
     build_card(ecs, "Strike", 1)
-        .with(Targeted{ range: 2 })
+        .with(item::Targeted{ range: 2 })
         .with(effects::DealDamage{ amount: 6 })
         .build()
 }
 
 fn defend(ecs: &mut World) -> Entity {
     build_card(ecs, "Defend", 1)
+        .with(item::SelfTargeted{})
         .with(effects::GainBlock{ amount: 5 })
         .build()
 }
 
 fn bash(ecs: &mut World) -> Entity {
     build_card(ecs, "Bash", 2)
-        .with(Targeted{ range: 2 })
+        .with(item::Targeted{ range: 2 })
         .with(effects::DealDamage{ amount: 8 })
         .with(status::Vulnerable{ turns: 2 })
         .build()
@@ -39,7 +39,7 @@ fn bash(ecs: &mut World) -> Entity {
 
 fn clothesline(ecs: &mut World, x: i32, y: i32) -> Entity {
     build_card(ecs, "Clothesline", 2)
-        .with(Targeted{ range: 2 })
+        .with(item::Targeted{ range: 2 })
         .with(effects::DealDamage{ amount: 12 })
         .with(status::Weak{ turns: 2 })
         .with(Position{ x, y })
@@ -54,8 +54,8 @@ fn clothesline(ecs: &mut World, x: i32, y: i32) -> Entity {
 
 fn cleave(ecs: &mut World, x: i32, y: i32) -> Entity {
     build_card(ecs, "Cleave", 1)
-        .with(Targeted{ range: 0 })
-        .with(AreaOfEffect{ radius: 2 })
+        .with(item::Targeted{ range: 0 })
+        .with(item::AreaOfEffect{ radius: 2 })
         .with(effects::DealDamage{ amount: 8 })
         .with(Position{ x, y })
         .with(Renderable{
@@ -69,7 +69,7 @@ fn cleave(ecs: &mut World, x: i32, y: i32) -> Entity {
 
 fn pommel_strike(ecs: &mut World, x: i32, y: i32) -> Entity {
     build_card(ecs, "Pommel Strike", 1)
-        .with(Targeted{ range: 2 })
+        .with(item::Targeted{ range: 2 })
         .with(effects::DealDamage{ amount: 8 })
         .with(effects::DrawCard{ number: 1 })
         .with(Position{ x, y })

@@ -1,7 +1,7 @@
 use specs::prelude::*;
 use super::{
     Position, Player, State, Map, Viewshed, RunState,
-    Item, intent,
+    item, intent,
     deck::Deck
 };
 
@@ -38,7 +38,7 @@ fn get_item(ecs: &mut World) {
     let player_pos = ecs.fetch::<Point>();
     let player_entity = ecs.fetch::<Entity>();
     let entities = ecs.entities();
-    let items = ecs.read_storage::<Item>();
+    let items = ecs.read_storage::<item::Item>();
     let positions = ecs.read_storage::<Position>();
 
     // Check if there are any items under the player

@@ -4,8 +4,8 @@ use rltk::{RGB, Rltk, VirtualKeyCode};
 use std::char;
 
 use super::{
-    CombatStats, Player, Map, Name, Card, Position, InBackpack, Point, Viewshed,
-    deck::Deck, util::utils, gamelog::GameLog, status,
+    CombatStats, Player, Map, Name, Position, Point, Viewshed,
+    deck::Deck, util::utils, gamelog::GameLog, item, status,
     map::MAPWIDTH, map::MAPHEIGHT, WINDOWHEIGHT, deck::MAX_HAND_SIZE
 };
 
@@ -194,9 +194,13 @@ pub fn draw_play_hand(ctx: &mut Rltk) {
     ctx.print_color(INVENTORYPOS + 2, WINDOWHEIGHT - 1, RGB::named(rltk::YELLOW), RGB::named(rltk::BLACK), "ESC to cancel");
 }
 
+pub fn draw_discard_hand(ctx: &mut Rltk, number: i32) {
+    ctx.print_color(INVENTORYPOS + 2, WINDOWHEIGHT - 1, RGB::named(rltk::YELLOW), RGB::named(rltk::BLACK), format!("Discard {} cards", number));
+}
+
 pub fn draw_hand(ecs: &World, ctx: &mut Rltk) -> (ItemMenuResult, Option<Entity>) {
     let deck = ecs.write_resource::<Deck>();
-    let cards = ecs.read_storage::<Card>();
+    let cards = ecs.read_storage::<item::Card>();
     let names = ecs.read_storage::<Name>();
 
     let player_entity = ecs.fetch::<Entity>();
@@ -243,7 +247,7 @@ pub fn draw_hand(ecs: &World, ctx: &mut Rltk) -> (ItemMenuResult, Option<Entity>
 pub fn draw_inventory(ecs: &mut World, ctx: &mut Rltk) -> (ItemMenuResult, Option<Entity>) {
     let player_entity = ecs.fetch::<Entity>();
     let names = ecs.read_storage::<Name>();
-    let backpack = ecs.read_storage::<InBackpack>();
+    let backpack = ecs.read_storage::<item::InBackpack>();
     let entities = ecs.entities();
 
     let inventory  = (&backpack, &names).join().filter(|item| item.0.owner == *player_entity);

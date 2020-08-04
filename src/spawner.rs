@@ -5,8 +5,7 @@ use rltk::{RGB, RandomNumberGenerator};
 use super::{
     Position, Name, Renderable, Player, CombatStats, saveload,
     Viewshed, Monster, BlocksTile, effects,
-    cards, Potion, Item, Targeted, AreaOfEffect,
-    util::rect::Rect, map::MAPWIDTH,
+    cards, item, util::rect::Rect, map::MAPWIDTH,
 };
 
 pub fn player(ecs: &mut World, x: i32, y: i32) -> Entity {
@@ -14,7 +13,7 @@ pub fn player(ecs: &mut World, x: i32, y: i32) -> Entity {
         .with(Position{ x, y })
         .with(Renderable{
             glyph: rltk::to_cp437('@'),
-            fg: RGB::from_f32(0.8, 0.6, 0.1),
+            fg: RGB::from_f32(0.1, 0.8, 0.1),
             bg: RGB::named(rltk::BLACK),
             render_order: 0,
         })
@@ -37,8 +36,8 @@ fn potion_block(ecs: &mut World, x: i32, y: i32) {
             render_order: 2,
         })
         .with(Name{ name: "Block Potion".to_string() })
-        .with(Item{})
-        .with(Potion{})
+        .with(item::Item{})
+        .with(item::Potion{})
         .with(effects::GainBlock{ amount: 12 })
         .marked::<SimpleMarker<saveload::SerializeMe>>()
         .build();
@@ -54,9 +53,9 @@ fn potion_fire(ecs: &mut World, x: i32, y: i32) {
             render_order: 2,
         })
         .with(Name{ name: "Fire Potion".to_string() })
-        .with(Item{})
-        .with(Potion{})
-        .with(Targeted{ range: 3 })
+        .with(item::Item{})
+        .with(item::Potion{})
+        .with(item::Targeted{ range: 3 })
         .with(effects::DealDamage{ amount: 20 })
         .marked::<SimpleMarker<saveload::SerializeMe>>()
         .build();
@@ -72,11 +71,11 @@ fn potion_explosive(ecs: &mut World, x: i32, y: i32) {
             render_order: 2,
         })
         .with(Name{ name: "Explosive Potion".to_string() })
-        .with(Item{})
-        .with(Potion{})
-        .with(Targeted{ range: 5 })
+        .with(item::Item{})
+        .with(item::Potion{})
+        .with(item::Targeted{ range: 5 })
+        .with(item::AreaOfEffect{ radius: 1 })
         .with(effects::DealDamage{ amount: 10 })
-        .with(AreaOfEffect{ radius: 1 })
         .marked::<SimpleMarker<saveload::SerializeMe>>()
         .build();
 }
@@ -216,7 +215,7 @@ pub fn spawn_room(ecs: &mut World, room: &Rect) {
     for idx in card_spawn_points.iter() {
         let x = *idx % MAPWIDTH;
         let y = *idx / MAPWIDTH;
-        cards::ironclad::random_card(ecs, x as i32, y as i32)
+        cards::silent::random_card(ecs, x as i32, y as i32)
     }
 
 }

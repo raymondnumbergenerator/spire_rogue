@@ -20,6 +20,7 @@ mod deck;
 mod spawner;
 
 mod effects;
+mod item;
 mod intent;
 mod status;
 mod components;
@@ -40,6 +41,7 @@ pub enum RunState {
     ShowInventory,
     ShowHand,
     ShowTargeting { range: i32, radius: i32, item: Entity },
+    DiscardCard { number: i32 },
     MainMenu { menu_selection: menu::MainMenuSelection },
     SaveGame
 }
@@ -54,8 +56,8 @@ impl State {
         visibility_sys.run_now(&self.ecs);
         let mut inventory_sys = systems::InventorySystem{};
         inventory_sys.run_now(&self.ecs);
-        let mut item_use_sys = systems::ItemUseSystem{};
-        item_use_sys.run_now(&self.ecs);
+        let mut action_sys = systems::ActionSystem{};
+        action_sys.run_now(&self.ecs);
         let mut monster_sys = systems::MonsterSystem{};
         monster_sys.run_now(&self.ecs);
         let mut melee_combat_sys = systems::MeleeCombatSystem{};
@@ -138,23 +140,30 @@ impl GameState for State {
                     gui::ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
                     gui::ItemMenuResult::NoResponse => {},
                     gui::ItemMenuResult::Selected => {
-                        let item_entity = result.1.unwrap();
+                        let potion = result.1.unwrap();
                         let mut radius = 0;
-                        if let Some(r) = self.ecs.read_storage::<AreaOfEffect>().get(item_entity) {
+                        if let Some(r) = self.ecs.read_storage::<item::AreaOfEffect>().get(potion) {
                             radius = r.radius;
                         }
 
-                        if let Some(ranged_item) = self.ecs.read_storage::<Targeted>().get(item_entity) {
+                        if let Some(targeted_action) = self.ecs.read_storage::<item::Targeted>().get(potion) {
                             newrunstate = RunState::ShowTargeting{
-                                range: ranged_item.range, 
+                                range: targeted_action.range, 
                                 radius: radius,
-                                item: item_entity
+                                item: potion
                             };
                         } else {
-                            let mut intent = self.ecs.write_storage::<intent::UseItem>();
-                            intent.insert(*self.ecs.fetch::<Entity>(), intent::UseItem{ item: item_entity, target: None }).expect("Unable to insert intent::UseItem");
-                            newrunstate = RunState::PlayerTurn;
+                            let mut intent = self.ecs.write_storage::<intent::PerformAction>();
+                            intent.insert(*self.ecs.fetch::<Entity>(), intent::PerformAction{ action: potion, target: None }).expect("Unable to insert intent::PerformAction");
+                            // Check if action requires discard
+                            if let Some(require_discard) = self.ecs.read_storage::<effects::DiscardCard>().get(potion) {
+                                newrunstate = RunState::DiscardCard{ number: require_discard.number };
+                            } else {
+                                newrunstate = RunState::PlayerTurn;
+                            }
                         }
+                        self.run_systems();
+                        self.ecs.maintain();
                     }
                 }
             }
@@ -165,23 +174,30 @@ impl GameState for State {
                     gui::ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
                     gui::ItemMenuResult::NoResponse => {},
                     gui::ItemMenuResult::Selected => {
-                        let item_entity = result.1.unwrap();
+                        let card = result.1.unwrap();
                         let mut radius = 0;
-                        if let Some(r) = self.ecs.read_storage::<AreaOfEffect>().get(item_entity) {
+                        if let Some(r) = self.ecs.read_storage::<item::AreaOfEffect>().get(card) {
                             radius = r.radius;
                         }
 
-                        if let Some(ranged_item) = self.ecs.read_storage::<Targeted>().get(item_entity) {
+                        if let Some(targeted_action) = self.ecs.read_storage::<item::Targeted>().get(card) {
                             newrunstate = RunState::ShowTargeting{
-                                range: ranged_item.range, 
+                                range: targeted_action.range, 
                                 radius: radius,
-                                item: item_entity
+                                item: card
                             };
                         } else {
-                            let mut intent = self.ecs.write_storage::<intent::UseItem>();
-                            intent.insert(*self.ecs.fetch::<Entity>(), intent::UseItem{ item: item_entity, target: None }).expect("Unable to insert intent::UseItem");
-                            newrunstate = RunState::PlayerTurn;
+                            let mut intent = self.ecs.write_storage::<intent::PerformAction>();
+                            intent.insert(*self.ecs.fetch::<Entity>(), intent::PerformAction{ action: card, target: None }).expect("Unable to insert intent::PerformAction");
+                            // Check if action requires discard
+                            if let Some(require_discard) = self.ecs.read_storage::<effects::DiscardCard>().get(card) {
+                                newrunstate = RunState::DiscardCard{ number: require_discard.number };
+                            } else {
+                                newrunstate = RunState::PlayerTurn;
+                            }
                         }
+                        self.run_systems();
+                        self.ecs.maintain();
                     }
                 }
             }
@@ -191,9 +207,35 @@ impl GameState for State {
                     gui::ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
                     gui::ItemMenuResult::NoResponse => {},
                     gui::ItemMenuResult::Selected => {
-                        let mut intent = self.ecs.write_storage::<intent::UseItem>();
-                        intent.insert(*self.ecs.fetch::<Entity>(), intent::UseItem{ item: item, target: result.1 }).expect("Unable to insert intent::UseItem");
-                        newrunstate = RunState::PlayerTurn;
+                        {
+                            let mut intent = self.ecs.write_storage::<intent::PerformAction>();
+                            intent.insert(*self.ecs.fetch::<Entity>(), intent::PerformAction{ action: item, target: result.1 }).expect("Unable to insert intent::PerformAction");
+                            // Check if action requires discard
+                            if let Some(require_discard) = self.ecs.read_storage::<effects::DiscardCard>().get(item) {
+                                newrunstate = RunState::DiscardCard{ number: require_discard.number };
+                            } else {
+                                newrunstate = RunState::PlayerTurn;
+                            }
+                        }
+                        self.run_systems();
+                        self.ecs.maintain();
+                    }
+                }
+            }
+            RunState::DiscardCard{number} => {
+                let hand_len = self.ecs.read_resource::<deck::Deck>().hand.len();
+                if number == 0 || hand_len == 0 {
+                    newrunstate = RunState::PlayerTurn;
+                } else {
+                    let result = gui::draw_hand(&mut self.ecs, ctx);
+                    gui::draw_discard_hand(ctx, number);
+                    match result.0 {
+                        gui::ItemMenuResult::Selected => {
+                            let mut deck = self.ecs.write_resource::<deck::Deck>();
+                            deck.discard(result.1.unwrap());
+                            newrunstate = RunState::DiscardCard{ number: number - 1 };
+                        }
+                        _ => {}
                     }
                 }
             }
@@ -247,12 +289,6 @@ fn main() -> rltk::BError {
     gs.ecs.register::<BlocksTile>();
     gs.ecs.register::<CombatStats>();
     gs.ecs.register::<SufferDamage>();
-    gs.ecs.register::<Card>();
-    gs.ecs.register::<Item>();
-    gs.ecs.register::<Potion>();
-    gs.ecs.register::<InBackpack>();
-    gs.ecs.register::<Targeted>();
-    gs.ecs.register::<AreaOfEffect>();
     gs.ecs.register::<SimpleMarker<saveload::SerializeMe>>();
     gs.ecs.register::<saveload::SerializableMap>();
     gs.ecs.register::<saveload::SerializableDeck>();
@@ -261,9 +297,19 @@ fn main() -> rltk::BError {
     gs.ecs.register::<effects::GainBlock>();
     gs.ecs.register::<effects::DiscardCard>();
     gs.ecs.register::<effects::DrawCard>();
-    gs.ecs.register::<intent::UseItem>();
+
+    gs.ecs.register::<item::Item>();
+    gs.ecs.register::<item::Card>();
+    gs.ecs.register::<item::Potion>();
+    gs.ecs.register::<item::InBackpack>();
+    gs.ecs.register::<item::Targeted>();
+    gs.ecs.register::<item::SelfTargeted>();
+    gs.ecs.register::<item::AreaOfEffect>();
+
+    gs.ecs.register::<intent::PerformAction>();
     gs.ecs.register::<intent::PickupItem>();
     gs.ecs.register::<intent::MeleeTarget>();
+
     gs.ecs.register::<status::Weak>();
     gs.ecs.register::<status::Vulnerable>();
 
@@ -291,7 +337,7 @@ fn main() -> rltk::BError {
         draw: Vec::new(),
         discard: Vec::new(),
     };
-    initial_deck.gain_multiple_cards(cards::ironclad::starter(&mut gs.ecs));
+    initial_deck.gain_multiple_cards(cards::silent::starter(&mut gs.ecs));
     for _ in 0 .. 5 {
         initial_deck.draw();
     }

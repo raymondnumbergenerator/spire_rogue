@@ -44,32 +44,6 @@ pub struct CombatStats {
 }
 
 #[derive(Component, Debug, ConvertSaveload, Clone)]
-pub struct Targeted {
-    pub range: i32
-}
-
-#[derive(Component, Debug, ConvertSaveload, Clone)]
-pub struct AreaOfEffect {
-    pub radius: i32
-}
-
-#[derive(Component, Debug, Serialize, Deserialize, Clone)]
-pub struct Item {}
-
-#[derive(Component, Debug, ConvertSaveload, Clone)]
-pub struct Card {
-    pub energy_cost: i32
-}
-
-#[derive(Component, Debug, Serialize, Deserialize, Clone)]
-pub struct Potion {}
-
-#[derive(Component, Debug, ConvertSaveload)]
-pub struct InBackpack {
-    pub owner: Entity
-}
-
-#[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct Player {
     pub max_energy: i32,
     pub energy: i32,

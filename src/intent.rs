@@ -5,8 +5,8 @@ use specs_derive::{Component, ConvertSaveload};
 use serde::{Serialize, Deserialize};
 
 #[derive(Component, Debug, ConvertSaveload)]
-pub struct UseItem {
-    pub item: Entity,
+pub struct PerformAction {
+    pub action: Entity,
     pub target: Option<rltk::Point>,
 }
 

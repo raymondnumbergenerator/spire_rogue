@@ -1,14 +1,13 @@
 use specs::prelude::*;
 use super::super::{
     Name, Player, Monster, CombatStats, gamelog::GameLog,
-    intent, AreaOfEffect, Map, SufferDamage,
-    deck::Deck, Card, Potion,
+    intent, item, deck::Deck, Map, SufferDamage,
     effects, status
 };
 
-pub struct ItemUseSystem {}
+pub struct ActionSystem {}
 
-impl<'a> System<'a> for ItemUseSystem {
+impl<'a> System<'a> for ActionSystem {
     type SystemData = (
         ReadExpect<'a, Entity>,
         WriteExpect<'a, GameLog>,
@@ -17,47 +16,52 @@ impl<'a> System<'a> for ItemUseSystem {
         ReadStorage<'a, Monster>,
         ReadExpect<'a, Map>,
         ReadStorage<'a, Name>,
-        ReadStorage<'a, Potion>,
         WriteExpect<'a, Deck>,
-        ReadStorage<'a, Card>,
-        WriteStorage<'a, intent::UseItem>,
+        ReadStorage<'a, item::Potion>,
+        ReadStorage<'a, item::SelfTargeted>,
+        ReadStorage<'a, item::AreaOfEffect>,
+        ReadStorage<'a, item::Card>,
+        WriteStorage<'a, intent::PerformAction>,
         WriteStorage<'a, CombatStats>,
         WriteStorage<'a, SufferDamage>,
-        ReadStorage<'a, AreaOfEffect>,
         ReadStorage<'a, effects::GainBlock>,
         ReadStorage<'a, effects::DealDamage>,
+        ReadStorage<'a, effects::DrawCard>,
         WriteStorage<'a, status::Weak>,
         WriteStorage<'a, status::Vulnerable>,
-        ReadStorage<'a, effects::DrawCard>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
         let (player_entity, mut log, entities, mut player, monsters, map, names, 
-            potions, mut deck, cards, mut intent_use, mut combat_stats, mut suffer_damage, aoe,
-            effect_gain_block, effect_deal_damage, mut status_weak, mut status_vulnerable,
-            effect_draw) = data;
+            mut deck, potions, self_targeted, aoe, cards, mut intent_action, mut combat_stats, mut suffer_damage,
+            effect_gain_block, effect_deal_damage, effect_draw,
+            mut status_weak, mut status_vulnerable) = data;
 
-        for (entity, intent) in (&entities, &intent_use).join() {
+        for (entity, intent) in (&entities, &intent_action).join() {
             // Determine affected targets
             let mut targets: Vec<Entity> = Vec::new();
-            match intent.target {
-                None => { targets.push(*player_entity); }
-                Some(target) => {
-                    let area_effect = aoe.get(intent.item);
-                    match area_effect {
-                        None => {
-                            let idx = map.xy_idx(target.x, target.y);
-                            for mob in map.tile_content[idx].iter() {
-                                targets.push(*mob);
-                            }
-                        }
-                        Some(area_effect) => {
-                            let mut aoe_tiles = rltk::field_of_view(target, area_effect.radius, &*map);
-                            aoe_tiles.retain(|p| p.x > 0 && p.x < map.width-1 && p.y > 0 && p.y < map.height-1 );
-                            for tile_idx in aoe_tiles.iter() {
-                                let idx = map.xy_idx(tile_idx.x, tile_idx.y);
+            if let Some(_) = self_targeted.get(intent.action) {
+                targets.push(entity)
+            } else {
+                match intent.target {
+                    None => { targets.push(entity); }
+                    Some(target) => {
+                        let area_effect = aoe.get(intent.action);
+                        match area_effect {
+                            None => {
+                                let idx = map.xy_idx(target.x, target.y);
                                 for mob in map.tile_content[idx].iter() {
-                                    if let Some(_) = monsters.get(*mob) { targets.push(*mob); }
+                                    targets.push(*mob);
+                                }
+                            }
+                            Some(area_effect) => {
+                                let mut aoe_tiles = rltk::field_of_view(target, area_effect.radius, &*map);
+                                aoe_tiles.retain(|p| p.x > 0 && p.x < map.width-1 && p.y > 0 && p.y < map.height-1 );
+                                for tile_idx in aoe_tiles.iter() {
+                                    let idx = map.xy_idx(tile_idx.x, tile_idx.y);
+                                    for mob in map.tile_content[idx].iter() {
+                                        if let Some(_) = monsters.get(*mob) { targets.push(*mob); }
+                                    }
                                 }
                             }
                         }
@@ -66,21 +70,21 @@ impl<'a> System<'a> for ItemUseSystem {
             }
 
             // Apply gain block to affected targets
-            if let Some(item) = effect_gain_block.get(intent.item) {
+            if let Some(action) = effect_gain_block.get(intent.action) {
                 for target in targets.iter() {
                     if let Some(stats) = combat_stats.get_mut(*target) {
-                        stats.block = stats.block + item.amount;
+                        stats.block = stats.block + action.amount;
                     }
                     if entity == *player_entity {
-                        log.push(format!("You use {} and gain {} block.", names.get(intent.item).unwrap().name, item.amount))
+                        log.push(format!("You use {} and gain {} block.", names.get(intent.action).unwrap().name, action.amount))
                     }
                 }
             }
 
             // Deal damage to affected targets
-            if let Some(item) = effect_deal_damage.get(intent.item) {
+            if let Some(action) = effect_deal_damage.get(intent.action) {
                 for target in targets.iter() {
-                    let mut dmg = item.amount;
+                    let mut dmg = action.amount;
 
                     // Check for status: vulnerable
                     if let Some(_) = status_vulnerable.get_mut(*target) {
@@ -90,7 +94,7 @@ impl<'a> System<'a> for ItemUseSystem {
                     SufferDamage::new_damage(&mut suffer_damage, *target, dmg);
                     if entity == *player_entity {
                         log.push(format!("You use {} on {} for {} damage.",
-                            names.get(intent.item).unwrap().name,
+                            names.get(intent.action).unwrap().name,
                             names.get(*target).unwrap().name,
                             dmg))
                     }
@@ -100,13 +104,13 @@ impl<'a> System<'a> for ItemUseSystem {
             // Apply weak to affected targets
             {
                 let mut affected_targets = Vec::new();
-                if let Some(item) = status_weak.get(intent.item) {
+                if let Some(action) = status_weak.get(intent.action) {
                     for target in targets.iter() {
-                        affected_targets.push((*target, item.turns));
+                        affected_targets.push((*target, action.turns));
                         if entity == *player_entity {
                             log.push(format!("You apply weak to {} for {} turns.",
                                 names.get(*target).unwrap().name,
-                                item.turns))
+                                action.turns))
                         }
                     }
                 }
@@ -122,13 +126,13 @@ impl<'a> System<'a> for ItemUseSystem {
             // Apply vulnerable to affected targets
             {
                 let mut affected_targets = Vec::new();
-                if let Some(item) = status_vulnerable.get(intent.item) {
+                if let Some(action) = status_vulnerable.get(intent.action) {
                     for target in targets.iter() {
-                        affected_targets.push((*target, item.turns));
+                        affected_targets.push((*target, action.turns));
                         if entity == *player_entity {
                             log.push(format!("You apply vulnerable to {} for {} turns.",
                                 names.get(*target).unwrap().name,
-                                item.turns))
+                                action.turns))
                         }
                     }
                 }
@@ -143,24 +147,24 @@ impl<'a> System<'a> for ItemUseSystem {
 
             // Draw cards
             {
-                if let Some(item) = effect_draw.get(intent.item) {
-                    for _ in 0 .. item.number {
+                if let Some(action) = effect_draw.get(intent.action) {
+                    for _ in 0 .. action.number {
                         deck.draw();
                     }
                 }
             }
             
-            // Discard used card or remove used item
-            if let Some(_) = cards.get(intent.item) {
+            // Discard used card or remove used potion
+            if let Some(_) = cards.get(intent.action) {
                 if let Some(player_energy) = player.get_mut(*player_entity) {
-                    player_energy.energy -= cards.get(intent.item).unwrap().energy_cost;
+                    player_energy.energy -= cards.get(intent.action).unwrap().energy_cost;
                 }
-                deck.discard(intent.item);
-            } else {
-                entities.delete(intent.item).expect("Failed to delete entity");
+                deck.discard(intent.action);
+            } else if let Some(_) = potions.get(intent.action) {
+                entities.delete(intent.action).expect("Failed to delete entity");
             }
         }
 
-        intent_use.clear();
+        intent_action.clear();
     }
 }
