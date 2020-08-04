@@ -150,14 +150,14 @@ impl<'a> System<'a> for ItemUseSystem {
                 }
             }
             
-            // Remove used potion or discard used card
-            if let Some(_) = potions.get(intent.item) {
-                entities.delete(intent.item).expect("Failed to delete entity");
-            } else {
+            // Discard used card or remove used item
+            if let Some(_) = cards.get(intent.item) {
                 if let Some(player_energy) = player.get_mut(*player_entity) {
                     player_energy.energy -= cards.get(intent.item).unwrap().energy_cost;
                 }
                 deck.discard(intent.item);
+            } else {
+                entities.delete(intent.item).expect("Failed to delete entity");
             }
         }
 

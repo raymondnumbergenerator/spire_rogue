@@ -204,7 +204,10 @@ impl GameState for State {
                     menu::MainMenuResult::Selected{ selected } => {
                         match selected {
                             menu::MainMenuSelection::NewGame => newrunstate = RunState::PreRun,
-                            menu::MainMenuSelection::LoadGame => newrunstate = RunState::PreRun,
+                            menu::MainMenuSelection::LoadGame => {
+                                saveload::load_game(&mut self.ecs);
+                                newrunstate = RunState::AwaitingInput;
+                            }
                             menu::MainMenuSelection::Quit => { ::std::process::exit(0); }
                         }
                     }
@@ -216,7 +219,7 @@ impl GameState for State {
             }
         }
 
-        {
+        {   
             let mut runwriter = self.ecs.write_resource::<RunState>();
             *runwriter = newrunstate;
         }
@@ -251,7 +254,8 @@ fn main() -> rltk::BError {
     gs.ecs.register::<Targeted>();
     gs.ecs.register::<AreaOfEffect>();
     gs.ecs.register::<SimpleMarker<saveload::SerializeMe>>();
-    gs.ecs.register::<saveload::SerializationHelper>();
+    gs.ecs.register::<saveload::SerializableMap>();
+    gs.ecs.register::<saveload::SerializableDeck>();
 
     gs.ecs.register::<effects::DealDamage>();
     gs.ecs.register::<effects::GainBlock>();

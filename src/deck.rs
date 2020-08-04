@@ -5,6 +5,7 @@ use rand::seq::SliceRandom;
 
 pub const MAX_HAND_SIZE: usize = 10;
 
+#[derive(Clone)]
 pub struct Deck {
     pub hand: Vec<Entity>,
     pub draw: Vec<Entity>,
