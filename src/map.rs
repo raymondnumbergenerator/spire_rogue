@@ -7,7 +7,7 @@ use super::{WINDOWWIDTH, WINDOWHEIGHT, gui::GUISIZE};
 
 pub const MAPWIDTH: usize = WINDOWWIDTH;
 pub const MAPHEIGHT: usize = WINDOWHEIGHT - GUISIZE;
-// pub const MAPSIZE: usize = MAPHEIGHT * MAPWIDTH;
+pub const MAPSIZE: usize = MAPHEIGHT * MAPWIDTH;
 
 #[derive(PartialEq, Copy, Clone, Serialize, Deserialize)]
 pub enum TileType {

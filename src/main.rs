@@ -219,7 +219,7 @@ impl GameState for State {
             }
         }
 
-        {   
+        {
             let mut runwriter = self.ecs.write_resource::<RunState>();
             *runwriter = newrunstate;
         }
@@ -301,6 +301,8 @@ fn main() -> rltk::BError {
     for room in map.rooms.iter().skip(1) {
         spawner::spawn_room(&mut gs.ecs, room);
     }
+
+    // Register map resource
     gs.ecs.insert(map);
 
     rltk::main_loop(context, gs)

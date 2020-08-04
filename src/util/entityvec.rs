@@ -3,19 +3,21 @@ use specs::saveload::{Marker, ConvertSaveload};
 use serde::{Serialize, Deserialize};
 
 #[derive(Clone, Debug)]
-pub struct EntityVec<T>(Vec<T>);
+pub struct EntityVec<T>{
+    pub vec: Vec<T>
+}
 
 impl<T> EntityVec<T> {
     pub fn new() -> EntityVec<T> {
-        EntityVec { 0: Vec::new() }
+        EntityVec { vec: Vec::new() }
     }
 
     pub fn with_capacity(capacity: usize) -> EntityVec<T> {
-        EntityVec { 0: Vec::with_capacity(capacity) }
+        EntityVec { vec: Vec::with_capacity(capacity) }
     }
 
     pub fn with_existing(v: Vec<T>) -> EntityVec<T> {
-        EntityVec { 0: v }
+        EntityVec { vec: v }
     }
 }
 
@@ -23,13 +25,13 @@ impl<T> std::ops::Deref for EntityVec<T> {
     type Target = Vec<T>;
 
     fn deref(&self) -> &Vec<T> {
-        &self.0
+        &self.vec
     }
 }
 
 impl<T> std::ops::DerefMut for EntityVec<T> {
     fn deref_mut(&mut self) -> &mut Vec<T> {
-        &mut self.0
+        &mut self.vec
     }
 }
 
