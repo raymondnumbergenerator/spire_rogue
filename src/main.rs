@@ -132,7 +132,7 @@ impl GameState for State {
             RunState::MonsterTurn => {
                 self.run_systems();
                 self.ecs.maintain();
-                newrunstate = RunState::EndTurn{player_turn: false};
+                newrunstate = RunState::EndTurn{ player_turn: false };
             }
             RunState::ShowInventory => {
                 let result = gui::draw_inventory(&mut self.ecs, ctx);

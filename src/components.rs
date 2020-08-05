@@ -38,8 +38,8 @@ pub struct Name {
 pub struct CombatStats {
     pub max_hp: i32,
     pub hp: i32,
-    pub def: i32,
-    pub atk: i32,
+    pub dexterity: i32,
+    pub strength: i32,
     pub block: i32,
 }
 

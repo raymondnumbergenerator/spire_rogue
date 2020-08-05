@@ -22,7 +22,7 @@ impl<'a> System<'a> for MeleeCombatSystem {
                 let target_stats = combat_stats.get(intent_melee.target).unwrap();
                 if target_stats.hp > 0 {
                     let target_name = names.get(intent_melee.target).unwrap();
-                    let mut damage = i32::max(0, stats.atk);
+                    let mut damage = i32::max(0, stats.strength);
 
                     // Check for status: weak
                     if let Some(_) = statusweak.get_mut(ent) {

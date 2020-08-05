@@ -21,7 +21,7 @@ pub fn player(ecs: &mut World, x: i32, y: i32) -> Entity {
         .with(Player{ max_energy: 3, energy: 3 })
         .with(Name{ name: "Ironclad".to_string() })
         .with(Viewshed{ visible_tiles: Vec::new(), range: 8, dirty: true })
-        .with(CombatStats{ max_hp: 70, hp: 70, def: 0, atk: 6, block: 0 })
+        .with(CombatStats{ max_hp: 70, hp: 70, dexterity: 0, strength: 0, block: 0 })
         .marked::<SimpleMarker<saveload::SerializeMe>>()
         .build()
 }
@@ -95,7 +95,7 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32,
         .with(Name{ name: name.to_string() })
         .with(Viewshed{ visible_tiles: Vec::new(), range: 8, dirty: true})
         .with(BlocksTile{})
-        .with(CombatStats{ max_hp: hp, hp: hp, def: 0, atk: 4, block: 0 })
+        .with(CombatStats{ max_hp: hp, hp: hp, dexterity: 0, strength: 4, block: 0 })
         .marked::<SimpleMarker<saveload::SerializeMe>>()
         .build();
 }

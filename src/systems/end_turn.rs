@@ -17,7 +17,7 @@ impl<'a> System<'a> for EndTurnSystem {
     );
 
     fn run(&mut self, data : Self::SystemData) {
-        let (runstate, mut log, entities, player_ent, names, monsters, mut stats, mut status_weak, mut status_vulnerable) = data;
+        let (runstate, mut log, entities, player_ent, names, monsters, mut combat_stats, mut status_weak, mut status_vulnerable) = data;
 
         // Skip if not on endturn
         let turn: bool;
@@ -73,11 +73,11 @@ impl<'a> System<'a> for EndTurnSystem {
         }
 
         // Decay all block
-        for (ent, mut stat) in (&entities, &mut stats).join() {
+        for (ent, mut stats) in (&entities, &mut combat_stats).join() {
             if turn {
-                if !(ent == *player_ent) { stat.block = 0; }
+                if !(ent == *player_ent) { stats.block = 0; }
             } else {
-                if ent == *player_ent { stat.block = 0; }
+                if ent == *player_ent { stats.block = 0; }
             }
         }
 

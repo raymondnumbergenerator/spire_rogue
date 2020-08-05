@@ -73,11 +73,13 @@ impl<'a> System<'a> for ActionSystem {
             // Apply gain block to affected targets
             if let Some(action) = effect_gain_block.get(intent.action) {
                 for target in targets.iter() {
+                    let mut amount = 0;
                     if let Some(stats) = combat_stats.get_mut(*target) {
-                        stats.block = stats.block + action.amount;
+                        amount = i32::max(0, action.amount + stats.dexterity);
+                        stats.block += amount;
                     }
                     if entity == *player_entity {
-                        log.push(format!("You use {} and gain {} block.", names.get(intent.action).unwrap().name, action.amount))
+                        log.push(format!("You use {} and gain {} block.", names.get(intent.action).unwrap().name, amount))
                     }
                 }
             }
@@ -85,7 +87,8 @@ impl<'a> System<'a> for ActionSystem {
             // Deal damage to affected targets
             if let Some(action) = effect_deal_damage.get(intent.action) {
                 for target in targets.iter() {
-                    let mut dmg = action.amount;
+                    let stats = combat_stats.get(entity).unwrap();
+                    let mut dmg = i32::max(0, action.amount + stats.strength);
 
                     // Check for status: vulnerable
                     if let Some(_) = status_vulnerable.get_mut(*target) {

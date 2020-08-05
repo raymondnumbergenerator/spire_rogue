@@ -25,7 +25,7 @@ impl<'a> System<'a> for MonsterSystem {
     fn run(&mut self, data : Self::SystemData) {
         let (mut map, mut log, player_pos, player_entity,
             names, runstate, entities, mut viewshed,
-            monster, mut position,  mut stats,
+            monster, mut position,  mut combat_stats,
             mut intent_melee, mut status_poison) = data;
         
         // Skip if not on monsterturn
@@ -34,8 +34,8 @@ impl<'a> System<'a> for MonsterSystem {
         // Process poison and derement poison counter
         {
             let mut to_remove = Vec::new();
-            for (ent, mut poison, mut stat) in (&entities, &mut status_poison, &mut stats).join() {
-                stat.hp -= poison.turns;
+            for (ent, mut poison, mut stats) in (&entities, &mut status_poison, &mut combat_stats).join() {
+                stats.hp -= poison.turns;
                 if let Some(ent_name) = names.get(ent) {
                     log.push(format!("{} takes {} damage from poison.", ent_name.name.to_string(), poison.turns));
                 }
