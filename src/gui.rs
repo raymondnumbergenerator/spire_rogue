@@ -27,6 +27,7 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
     let combat_stats = ecs.read_storage::<CombatStats>();
     let status_weak = ecs.read_storage::<status::Weak>();
     let status_vulnerable = ecs.read_storage::<status::Vulnerable>();
+    let status_poison = ecs.read_storage::<status::Poison>();
 
     let mouse_pos = ctx.mouse_pos();
     if mouse_pos.0 >= map.width || mouse_pos.1 >= map.height { return; }
@@ -51,11 +52,12 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
     }
 
     // Push status effects to tooltips
-    for (position, weak, vulnerable) in (&positions, status_weak.maybe(), status_vulnerable.maybe()).join() {
+    for (position, weak, vulnerable, poison) in (&positions, status_weak.maybe(),status_vulnerable.maybe(), status_poison.maybe()).join() {
         let idx = map.xy_idx(position.x, position.y);
         if position.x == mouse_pos.0 && position.y == mouse_pos.1 && map.visible_tiles[idx] {
             if let Some(w) = weak { tooltip.push(format!("W{}", w.turns)); }
             if let Some(v) = vulnerable { tooltip.push(format!("V{}", v.turns)); }
+            if let Some(p) = poison { tooltip.push(format!("P{}", p.turns)); }
         }
     }
 
@@ -101,6 +103,7 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
             match s.chars().next().unwrap() {
                 'V' => { color = RGB::named(rltk::RED); },
                 'W' => { color = RGB::named(rltk::LIGHTBLUE); },
+                'P' => { color = RGB::named(rltk::GREEN); },
                 _ => { color = RGB::named(rltk::CYAN); }
             }
             ctx.print_color(x, y, color, RGB::named(rltk::GREY), s);

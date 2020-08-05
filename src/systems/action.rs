@@ -29,13 +29,14 @@ impl<'a> System<'a> for ActionSystem {
         ReadStorage<'a, effects::DrawCard>,
         WriteStorage<'a, status::Weak>,
         WriteStorage<'a, status::Vulnerable>,
+        WriteStorage<'a, status::Poison>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
         let (player_entity, mut log, entities, mut player, monsters, map, names, 
             mut deck, potions, self_targeted, aoe, cards, mut intent_action, mut combat_stats, mut suffer_damage,
             effect_gain_block, effect_deal_damage, effect_draw,
-            mut status_weak, mut status_vulnerable) = data;
+            mut status_weak, mut status_vulnerable, mut status_poison) = data;
 
         for (entity, intent) in (&entities, &intent_action).join() {
             // Determine affected targets
@@ -141,6 +142,28 @@ impl<'a> System<'a> for ActionSystem {
                         already_affected.turns += target.1;
                     } else {
                         status_vulnerable.insert(target.0, status::Vulnerable{ turns: target.1 }).expect("Unable to insert status");
+                    }
+                }
+            }
+
+            // Apply poison to affected targets
+            {
+                let mut affected_targets = Vec::new();
+                if let Some(action) = status_poison.get(intent.action) {
+                    for target in targets.iter() {
+                        affected_targets.push((*target, action.turns));
+                        if entity == *player_entity {
+                            log.push(format!("You apply poison to {} for {} turns.",
+                                names.get(*target).unwrap().name,
+                                action.turns))
+                        }
+                    }
+                }
+                for target in affected_targets.iter() {
+                    if let Some(already_affected) = status_poison.get_mut(target.0) {
+                        already_affected.turns += target.1;
+                    } else {
+                        status_poison.insert(target.0, status::Poison{ turns: target.1 }).expect("Unable to insert status");
                     }
                 }
             }

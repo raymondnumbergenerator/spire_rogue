@@ -28,7 +28,7 @@ impl<'a> System<'a> for EndTurnSystem {
 
         // Decrement weakness turn counter
         {
-            let mut affected_targets = Vec::new();
+            let mut to_remove = Vec::new();
             for (ent, mut weak) in (&entities, &mut status_weak).join() {
                 if turn {
                     if ent == *player_ent { weak.turns -= 1; }
@@ -38,20 +38,20 @@ impl<'a> System<'a> for EndTurnSystem {
                     }
                 }
                 if weak.turns < 1 {
-                    affected_targets.push(ent);
+                    to_remove.push(ent);
                 }
             }
-            for to_remove in affected_targets {
-                if let Some(ent_name) = names.get(to_remove) {
+            for ent in to_remove {
+                if let Some(ent_name) = names.get(ent) {
                     log.push(format!("Weak wears off for {}.", ent_name.name.to_string()));
                 }
-                status_weak.remove(to_remove);
+                status_weak.remove(ent);
             }
         }
 
         // Decrement vulnerable turn counter
         {
-            let mut affected_targets = Vec::new();
+            let mut to_remove = Vec::new();
             for (ent, mut vulnerable) in (&entities, &mut status_vulnerable).join() {
                 if turn {
                     if ent == *player_ent { vulnerable.turns -= 1; }
@@ -61,14 +61,14 @@ impl<'a> System<'a> for EndTurnSystem {
                     }
                 }
                 if vulnerable.turns < 1 {
-                    affected_targets.push(ent);
+                    to_remove.push(ent);
                 }
             }
-            for to_remove in affected_targets {
-                if let Some(ent_name) = names.get(to_remove) {
+            for ent in to_remove {
+                if let Some(ent_name) = names.get(ent) {
                     log.push(format!("Vulnerable wears off for {}.", ent_name.name.to_string()));
                 }
-                status_vulnerable.remove(to_remove);
+                status_vulnerable.remove(ent);
             }
         }
 

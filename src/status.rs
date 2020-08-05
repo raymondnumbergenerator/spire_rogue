@@ -13,3 +13,8 @@ pub struct Weak {
 pub struct Vulnerable {
     pub turns: i32
 }
+
+#[derive(Component, Debug, ConvertSaveload, Clone)]
+pub struct Poison {
+    pub turns: i32
+}

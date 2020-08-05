@@ -312,6 +312,7 @@ fn main() -> rltk::BError {
 
     gs.ecs.register::<status::Weak>();
     gs.ecs.register::<status::Vulnerable>();
+    gs.ecs.register::<status::Poison>();
 
     // Register gamelog resource
     gs.ecs.insert(gamelog::GameLog{ entries: Vec::new() });

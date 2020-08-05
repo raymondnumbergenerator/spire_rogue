@@ -73,6 +73,50 @@ fn backflip(ecs: &mut World, x: i32, y: i32) -> Entity {
         .build()
 }
 
+fn deadly_poison(ecs: &mut World, x: i32, y: i32) -> Entity {
+    build_card(ecs, "Deadly Poison", 1)
+        .with(item::Targeted{ range: 3 })
+        .with(status::Poison{ turns: 5 })
+        .with(Position{ x, y })
+        .with(Renderable{
+            glyph: rltk::to_cp437('='),
+            fg: RGB::named(rltk::ORANGE),
+            bg: RGB::named(rltk::BLACK),
+            render_order: 2,
+        })
+        .build()
+}
+
+fn poisoned_stab(ecs: &mut World, x: i32, y: i32) -> Entity {
+    build_card(ecs, "Poisoned Stab", 1)
+        .with(item::Targeted{ range: 3 })
+        .with(effects::DealDamage{ amount: 6 })
+        .with(status::Poison{ turns: 3 })
+        .with(Position{ x, y })
+        .with(Renderable{
+            glyph: rltk::to_cp437('='),
+            fg: RGB::named(rltk::ORANGE),
+            bg: RGB::named(rltk::BLACK),
+            render_order: 2,
+        })
+        .build()
+}
+
+fn quick_slash(ecs: &mut World, x: i32, y: i32) -> Entity {
+    build_card(ecs, "Quick Slash", 1)
+        .with(item::Targeted{ range: 2 })
+        .with(effects::DealDamage{ amount: 8 })
+        .with(effects::DrawCard{ number: 1 })
+        .with(Position{ x, y })
+        .with(Renderable{
+            glyph: rltk::to_cp437('='),
+            fg: RGB::named(rltk::ORANGE),
+            bg: RGB::named(rltk::BLACK),
+            render_order: 2,
+        })
+        .build()
+}
+
 fn slice(ecs: &mut World, x: i32, y: i32) -> Entity {
     build_card(ecs, "Slice", 0)
         .with(item::Targeted{ range: 2 })
@@ -91,12 +135,15 @@ pub fn random_card(ecs: &mut World, x: i32, y: i32) {
     let roll: i32;
     {
         let mut rng = ecs.write_resource::<RandomNumberGenerator>();
-        roll = rng.roll_dice(1, 3);
+        roll = rng.roll_dice(1, 6);
     }
 
     match roll {
         1 => { acrobatics(ecs, x, y); }
-        1 => { backflip(ecs, x, y); }
+        2 => { backflip(ecs, x, y); }
+        3 => { deadly_poison(ecs, x, y); }
+        4 => { poisoned_stab(ecs, x, y); }
+        5 => { quick_slash(ecs, x, y); }
         _ => { slice(ecs, x, y); }
     }
 }
