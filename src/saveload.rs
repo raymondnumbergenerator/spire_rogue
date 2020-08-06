@@ -12,7 +12,7 @@ const SAVE_PATH: &str = "./save.json";
 
 use super::{
     util::entityvec::EntityVec,
-    Map, deck::Deck, Position, Renderable, Viewshed, BlocksTile, Name, CombatStats,
+    Map, deck, Position, Renderable, Viewshed, BlocksTile, Name, CombatStats,
     Player, Monster, SufferDamage,
     effects, item, intent, status
 };
@@ -24,6 +24,7 @@ pub struct SerializableDeck {
     pub hand: EntityVec<Entity>,
     pub draw: EntityVec<Entity>,
     pub discard: EntityVec<Entity>,
+    pub to_gain: deck::ToGain,
 }
 
 #[derive(Component, Serialize, Deserialize, Clone)]
@@ -75,11 +76,13 @@ pub fn save_game(ecs: &mut World) {
                         .build();
 
     // Helper to serialize deck data
-    let deck = ecs.get_mut::<Deck>().unwrap();
+    let to_gain = { ecs.get_mut::<deck::ToGain>().unwrap().clone() };
+    let deck = ecs.get_mut::<deck::Deck>().unwrap();
     let deck_copy = SerializableDeck{
         hand: EntityVec::with_existing(deck.hand.clone()),
         draw: EntityVec::with_existing(deck.draw.clone()),
         discard: EntityVec::with_existing(deck.discard.clone()),
+        to_gain: to_gain,
     };
     let deck_helper = ecs.create_entity()
                         .with(deck_copy)
@@ -95,10 +98,10 @@ pub fn save_game(ecs: &mut World) {
         serialize_individually!(
             ecs, serializer, data, SerializableMap, SerializableDeck, Position, Renderable, Viewshed,
             BlocksTile, Name, CombatStats, Player, Monster, SufferDamage,
-            item::Item, item::Card, item::Potion, item::InBackpack, item::Targeted, item::SelfTargeted, item::AreaOfEffect,
-            effects::DealDamage, effects::GainBlock, effects::DiscardCard, effects::DrawCard, 
+            item::Item, item::Card, item::Potion, item::Ethereal, item::InBackpack, item::Targeted, item::SelfTargeted, item::AreaOfEffect,
+            effects::DealDamage, effects::GainBlock, effects::DiscardCard, effects::DrawCard, effects::GainCard,
             intent::PerformAction, intent::PickupItem, intent::MeleeTarget,
-            status::Weak, status::Vulnerable
+            status::Weak, status::Vulnerable, status::Poison
         );
     }
 
@@ -125,10 +128,10 @@ pub fn load_game(ecs: &mut World) {
         deserialize_individually!(
             ecs, deserializer, data, SerializableMap, SerializableDeck, Position, Renderable, Viewshed,
             BlocksTile, Name, CombatStats, Player, Monster, SufferDamage,
-            item::Item, item::Card, item::Potion, item::InBackpack, item::Targeted, item::SelfTargeted, item::AreaOfEffect,
-            effects::DealDamage, effects::GainBlock, effects::DiscardCard, effects::DrawCard, 
+            item::Item, item::Card, item::Potion, item::Ethereal, item::InBackpack, item::Targeted, item::SelfTargeted, item::AreaOfEffect,
+            effects::DealDamage, effects::GainBlock, effects::DiscardCard, effects::DrawCard, effects::GainCard,
             intent::PerformAction, intent::PickupItem, intent::MeleeTarget,
-            status::Weak, status::Vulnerable
+            status::Weak, status::Vulnerable, status::Poison
         );
     }
 
@@ -150,10 +153,12 @@ pub fn load_game(ecs: &mut World) {
 
         // Load deck resource
         for (e, d) in (&entities, &deck_helper).join() {
-            let mut deck = ecs.write_resource::<Deck>();
+            let mut deck = ecs.write_resource::<deck::Deck>();
+            let mut to_gain = ecs.write_resource::<deck::ToGain>();
             deck.hand = d.hand.vec.clone();
             deck.draw = d.draw.vec.clone();
             deck.discard = d.discard.vec.clone();
+            *to_gain = d.to_gain.clone();
             to_delete[1] = Some(e);
         }
 

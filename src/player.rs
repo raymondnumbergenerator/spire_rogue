@@ -56,14 +56,41 @@ fn get_item(ecs: &mut World) {
     }
 }
 
-pub fn draw_card(ecs: &mut World) {
-    let mut deck = ecs.fetch_mut::<Deck>();
-    deck.draw();
-}
-
 fn redraw_hand(ecs: &mut World) {
-    let mut deck = ecs.fetch_mut::<Deck>();
-    deck.redraw();
+    let mut to_delete: Vec<Entity> = Vec::new();
+
+    // Discard cards
+    {
+        let ethereal = ecs.read_storage::<item::Ethereal>();
+        let mut deck = ecs.write_resource::<Deck>();
+    
+        let mut to_discard: Vec<Entity> = Vec::new();
+        for card in deck.hand.iter() {
+            if let Some(_) = ethereal.get(*card) {
+                to_delete.push(*card);
+            } else {
+                to_discard.push(*card);
+            }
+        }
+    
+        for card in to_discard.iter() {
+            deck.discard.push(*card);
+        }
+        deck.hand.clear();
+    }
+
+    // Delete ethereal cards
+    {
+        for card in to_delete.iter() {
+            ecs.delete_entity(*card).expect("Unable to delete ethereal card");
+        }
+    }
+
+    // Draw hand
+    let mut deck = ecs.write_resource::<Deck>();
+    for _ in 0 .. 5 {
+        deck.draw_card();
+    }
 }
 
 fn restore_energy(ecs: &mut World) {

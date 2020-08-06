@@ -15,6 +15,9 @@ pub struct Card {
 #[derive(Component, Debug, Serialize, Deserialize, Clone)]
 pub struct Potion {}
 
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct Ethereal{}
+
 #[derive(Component, Debug, ConvertSaveload)]
 pub struct InBackpack {
     pub owner: Entity

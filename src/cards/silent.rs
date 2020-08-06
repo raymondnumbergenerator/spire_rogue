@@ -45,6 +45,14 @@ fn survivor(ecs: &mut World) -> Entity {
         .build()
 }
 
+pub fn shiv(ecs: &mut World) -> Entity {
+    build_card(ecs, "Shiv", 0)
+        .with(item::Targeted{ range: 2 })
+        .with(effects::DealDamage{ amount: 4 })
+        .with(item::Ethereal{})
+        .build()
+}
+
 fn acrobatics(ecs: &mut World, x: i32, y: i32) -> Entity {
     build_card(ecs, "Acrobatics", 1)
         .with(effects::DrawCard{ number: 3 })
@@ -63,6 +71,41 @@ fn backflip(ecs: &mut World, x: i32, y: i32) -> Entity {
     build_card(ecs, "Backflip", 1)
         .with(effects::GainBlock{ amount: 5 })
         .with(effects::DrawCard{ number: 2 })
+        .with(Position{ x, y })
+        .with(Renderable{
+            glyph: rltk::to_cp437('='),
+            fg: RGB::named(rltk::ORANGE),
+            bg: RGB::named(rltk::BLACK),
+            render_order: 2,
+        })
+        .build()
+}
+
+fn blade_dance(ecs: &mut World, x: i32, y: i32) -> Entity {
+    build_card(ecs, "Blade Dance", 1)
+        .with(effects::GainCard{
+            card: effects::GainableCard::Shiv,
+            number: 2,
+            to_hand: true,
+        })
+        .with(Position{ x, y })
+        .with(Renderable{
+            glyph: rltk::to_cp437('='),
+            fg: RGB::named(rltk::ORANGE),
+            bg: RGB::named(rltk::BLACK),
+            render_order: 2,
+        })
+        .build()
+}
+
+fn cloak_and_dagger(ecs: &mut World, x: i32, y: i32) -> Entity {
+    build_card(ecs, "Cloak And Dagger", 1)
+        .with(effects::GainBlock{ amount: 6 })
+        .with(effects::GainCard{
+            card: effects::GainableCard::Shiv,
+            number: 1,
+            to_hand: true,
+        })
         .with(Position{ x, y })
         .with(Renderable{
             glyph: rltk::to_cp437('='),
@@ -135,15 +178,17 @@ pub fn random_card(ecs: &mut World, x: i32, y: i32) {
     let roll: i32;
     {
         let mut rng = ecs.write_resource::<RandomNumberGenerator>();
-        roll = rng.roll_dice(1, 6);
+        roll = rng.roll_dice(1, 8);
     }
 
     match roll {
         1 => { acrobatics(ecs, x, y); }
         2 => { backflip(ecs, x, y); }
-        3 => { deadly_poison(ecs, x, y); }
-        4 => { poisoned_stab(ecs, x, y); }
-        5 => { quick_slash(ecs, x, y); }
+        3 => { blade_dance(ecs, x, y); }
+        4 => { cloak_and_dagger(ecs, x, y); }
+        5 => { deadly_poison(ecs, x, y); }
+        6 => { poisoned_stab(ecs, x, y); }
+        7 => { quick_slash(ecs, x, y); }
         _ => { slice(ecs, x, y); }
     }
 }

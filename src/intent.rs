@@ -20,3 +20,8 @@ pub struct PickupItem {
 pub struct MeleeTarget {
     pub target: Entity
 }
+
+#[derive(Component, Debug, ConvertSaveload, Clone)]
+pub struct GainToHand {
+    pub card: String
+}

@@ -1,9 +1,21 @@
 use specs::prelude::*;
+use specs::saveload::{Marker, ConvertSaveload};
+use specs::error::NoError;
+use specs_derive::ConvertSaveload;
+use serde::{Serialize, Deserialize};
 
 use rand::thread_rng;
 use rand::seq::SliceRandom;
 
+use super::effects;
+
 pub const MAX_HAND_SIZE: usize = 10;
+
+#[derive(Clone, ConvertSaveload)]
+pub struct ToGain {
+    pub to_hand: Vec<effects::GainableCard>,
+    pub to_discard: Vec<effects::GainableCard>,
+}
 
 #[derive(Clone)]
 pub struct Deck {
@@ -15,6 +27,11 @@ pub struct Deck {
 impl Deck {
     pub fn gain_card(&mut self, c: Entity) {
         self.discard.push(c);
+    }
+
+    pub fn gain_to_hand(&mut self, c: Entity) {
+        self.draw.push(c);
+        self.draw_card();
     }
 
     pub fn gain_multiple_cards(&mut self, cards: Vec<Entity>) {
@@ -29,7 +46,7 @@ impl Deck {
         self.discard.clear();
     }
 
-    pub fn discard(&mut self, card: Entity) {
+    pub fn discard_card(&mut self, card: Entity, ethereal: bool) {
         let mut i = 0;
         for c in self.hand.iter() {
             if *c == card {
@@ -37,21 +54,13 @@ impl Deck {
             }
             i += 1;
         }
-        self.discard.push(self.hand.remove(i));
-    }
-
-    pub fn redraw(&mut self) {
-        for i in 0 .. self.hand.len() {
-            self.discard.push(self.hand[i])
-        }
-        self.hand.clear();
-
-        for _ in 0 .. 5 {
-            self.draw();
+        let c = self.hand.remove(i);
+        if !ethereal {
+            self.discard.push(c);
         }
     }
 
-    pub fn draw(&mut self) {
+    pub fn draw_card(&mut self) {
         if self.hand.len() < MAX_HAND_SIZE {
             if self.draw.len() == 0 {
                 self.reshuffle();

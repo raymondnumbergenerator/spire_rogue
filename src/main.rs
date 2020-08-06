@@ -58,6 +58,35 @@ impl State {
         inventory_sys.run_now(&self.ecs);
         let mut action_sys = systems::ActionSystem{};
         action_sys.run_now(&self.ecs);
+
+        // Resolve effects that gain cards
+        {
+            let gain_to_hand_clone = { self.ecs.fetch_mut::<deck::ToGain>().to_hand.clone() };
+            let gain_to_discard_clone = { self.ecs.fetch_mut::<deck::ToGain>().to_discard.clone() };
+            {
+                let mut to_gain = self.ecs.fetch_mut::<deck::ToGain>();
+                to_gain.to_hand.clear();
+                to_gain.to_discard.clear();
+            }
+
+            let mut gain_to_hand: Vec<Entity> = Vec::new();
+            let mut gain_to_discard: Vec<Entity> = Vec::new();
+            for card in gain_to_hand_clone.iter() {
+                gain_to_hand.push(effects::gain_card(&mut self.ecs, *card));
+            }
+            for card in gain_to_discard_clone.iter() {
+                gain_to_discard.push(effects::gain_card(&mut self.ecs, *card));
+            }
+
+            let mut deck = self.ecs.fetch_mut::<deck::Deck>();
+            for card in gain_to_hand.iter() {
+                deck.gain_to_hand(*card);
+            }
+            for card in gain_to_discard.iter() {
+                deck.gain_card(*card);
+            }
+        }
+
         let mut monster_sys = systems::MonsterSystem{};
         monster_sys.run_now(&self.ecs);
         let mut melee_combat_sys = systems::MeleeCombatSystem{};
@@ -232,7 +261,7 @@ impl GameState for State {
                     match result.0 {
                         gui::ItemMenuResult::Selected => {
                             let mut deck = self.ecs.write_resource::<deck::Deck>();
-                            deck.discard(result.1.unwrap());
+                            deck.discard_card(result.1.unwrap(), false);
                             newrunstate = RunState::DiscardCard{ number: number - 1 };
                         }
                         _ => {}
@@ -275,7 +304,7 @@ fn main() -> rltk::BError {
         .build()?;
     context.with_post_scanlines(true);
 
-    // Create gamestate and register runstate resource
+    // Create gamestate and register <RunState> resource
     let mut gs = State{ ecs: World::new() };
     gs.ecs.insert(RunState::MainMenu{ menu_selection: menu::MainMenuSelection::NewGame });
 
@@ -297,10 +326,12 @@ fn main() -> rltk::BError {
     gs.ecs.register::<effects::GainBlock>();
     gs.ecs.register::<effects::DiscardCard>();
     gs.ecs.register::<effects::DrawCard>();
+    gs.ecs.register::<effects::GainCard>();
 
     gs.ecs.register::<item::Item>();
     gs.ecs.register::<item::Card>();
     gs.ecs.register::<item::Potion>();
+    gs.ecs.register::<item::Ethereal>();
     gs.ecs.register::<item::InBackpack>();
     gs.ecs.register::<item::Targeted>();
     gs.ecs.register::<item::SelfTargeted>();
@@ -314,10 +345,10 @@ fn main() -> rltk::BError {
     gs.ecs.register::<status::Vulnerable>();
     gs.ecs.register::<status::Poison>();
 
-    // Register gamelog resource
+    // Register <gamelog::GameLog> resource
     gs.ecs.insert(gamelog::GameLog{ entries: Vec::new() });
 
-    // Register rng resource
+    // Register rng <rltk::RandomNumberGenerator> resource
     gs.ecs.insert(rltk::RandomNumberGenerator::new());
 
     // Register serialize marker resource
@@ -326,13 +357,15 @@ fn main() -> rltk::BError {
     // Create map, mark player spawn position
     let map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
+
+    // Register player position <Point> resource
     gs.ecs.insert(Point::new(player_x, player_y));
 
-    // Create player entity and register player resource
+    // Create player entity and register player <Entity> resource
     let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
     gs.ecs.insert(player_entity);
 
-    // Create deck and register deck resource
+    // Create deck and register <deck::Deck> resource
     let mut initial_deck = deck::Deck{
         hand: Vec::new(),
         draw: Vec::new(),
@@ -340,9 +373,16 @@ fn main() -> rltk::BError {
     };
     initial_deck.gain_multiple_cards(cards::silent::starter(&mut gs.ecs));
     for _ in 0 .. 5 {
-        initial_deck.draw();
+        initial_deck.draw_card();
     }
     gs.ecs.insert(initial_deck);
+
+    // Create gain queue and register <deck::ToGain> resource
+    let gain_queue = deck::ToGain{
+        to_hand: Vec::new(),
+        to_discard: Vec::new()
+    };
+    gs.ecs.insert(gain_queue);
 
     // Spawn mobs
     for room in map.rooms.iter().skip(1) {
