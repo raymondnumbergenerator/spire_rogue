@@ -31,15 +31,21 @@ pub enum GainableCard {
     Shiv,
 }
 
+pub fn gain_card(ecs: &mut World, card: GainableCard) -> Entity {
+    match card {
+        GainableCard::Shiv => { cards::silent::shiv(ecs) }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct GainCardQueue {
+    pub to_hand: Vec<GainableCard>,
+    pub to_discard: Vec<GainableCard>,
+}
+
 #[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct GainCard {
     pub card: GainableCard,
     pub number: i32,
     pub to_hand: bool,
-}
-
-pub fn gain_card(ecs: &mut World, card: GainableCard) -> Entity {
-    match card {
-        GainableCard::Shiv => { cards::silent::shiv(ecs) }
-    }
 }

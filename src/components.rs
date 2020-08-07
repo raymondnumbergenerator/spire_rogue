@@ -43,6 +43,9 @@ pub struct CombatStats {
     pub block: i32,
 }
 
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct Creature {}
+
 #[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct Player {
     pub max_energy: i32,

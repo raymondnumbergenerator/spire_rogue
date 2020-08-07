@@ -61,20 +61,20 @@ impl State {
 
         // Resolve effects that gain cards
         {
-            let gain_to_hand_clone = { self.ecs.fetch_mut::<deck::ToGain>().to_hand.clone() };
-            let gain_to_discard_clone = { self.ecs.fetch_mut::<deck::ToGain>().to_discard.clone() };
+            let gain_queue_hand = { self.ecs.fetch_mut::<effects::GainCardQueue>().to_hand.clone() };
+            let gain_queue_discard = { self.ecs.fetch_mut::<effects::GainCardQueue>().to_discard.clone() };
             {
-                let mut to_gain = self.ecs.fetch_mut::<deck::ToGain>();
-                to_gain.to_hand.clear();
-                to_gain.to_discard.clear();
+                let mut gain_queue = self.ecs.fetch_mut::<effects::GainCardQueue>();
+                gain_queue.to_hand.clear();
+                gain_queue.to_discard.clear();
             }
 
             let mut gain_to_hand: Vec<Entity> = Vec::new();
             let mut gain_to_discard: Vec<Entity> = Vec::new();
-            for card in gain_to_hand_clone.iter() {
+            for card in gain_queue_hand.iter() {
                 gain_to_hand.push(effects::gain_card(&mut self.ecs, *card));
             }
-            for card in gain_to_discard_clone.iter() {
+            for card in gain_queue_discard.iter() {
                 gain_to_discard.push(effects::gain_card(&mut self.ecs, *card));
             }
 
@@ -311,6 +311,7 @@ fn main() -> rltk::BError {
     // Register components
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
+    gs.ecs.register::<Creature>();
     gs.ecs.register::<Player>();
     gs.ecs.register::<Viewshed>();
     gs.ecs.register::<Monster>();
@@ -319,7 +320,7 @@ fn main() -> rltk::BError {
     gs.ecs.register::<CombatStats>();
     gs.ecs.register::<SufferDamage>();
     gs.ecs.register::<SimpleMarker<saveload::SerializeMe>>();
-    gs.ecs.register::<saveload::SerializableMap>();
+    gs.ecs.register::<saveload::SerializableResources>();
     gs.ecs.register::<saveload::SerializableDeck>();
 
     gs.ecs.register::<effects::DealDamage>();
@@ -378,7 +379,7 @@ fn main() -> rltk::BError {
     gs.ecs.insert(initial_deck);
 
     // Create gain queue and register <deck::ToGain> resource
-    let gain_queue = deck::ToGain{
+    let gain_queue = effects::GainCardQueue{
         to_hand: Vec::new(),
         to_discard: Vec::new()
     };

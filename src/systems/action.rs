@@ -17,7 +17,6 @@ impl<'a> System<'a> for ActionSystem {
         ReadExpect<'a, Map>,
         ReadStorage<'a, Name>,
         WriteExpect<'a, deck::Deck>,
-        WriteExpect<'a, deck::ToGain>,
         ReadStorage<'a, item::Potion>,
         ReadStorage<'a, item::Ethereal>,
         ReadStorage<'a, item::SelfTargeted>,
@@ -30,6 +29,7 @@ impl<'a> System<'a> for ActionSystem {
         ReadStorage<'a, effects::DealDamage>,
         ReadStorage<'a, effects::DrawCard>,
         ReadStorage<'a, effects::GainCard>,
+        WriteExpect<'a, effects::GainCardQueue>,
         WriteStorage<'a, status::Weak>,
         WriteStorage<'a, status::Vulnerable>,
         WriteStorage<'a, status::Poison>,
@@ -37,9 +37,9 @@ impl<'a> System<'a> for ActionSystem {
 
     fn run(&mut self, data: Self::SystemData) {
         let (player_entity, mut log, entities, mut player, monsters, map, names, 
-            mut deck, mut to_gain, potions, ethereal, self_targeted, aoe, cards,
+            mut deck, potions, ethereal, self_targeted, aoe, cards,
             mut intent_action, mut combat_stats, mut suffer_damage,
-            effect_gain_block, effect_deal_damage, effect_draw, gain_card,
+            effect_gain_block, effect_deal_damage, effect_draw, gain_card, mut gain_card_queue,
             mut status_weak, mut status_vulnerable, mut status_poison) = data;
 
         for (entity, intent) in (&entities, &intent_action).join() {
@@ -56,7 +56,7 @@ impl<'a> System<'a> for ActionSystem {
                             None => {
                                 let idx = map.xy_idx(target.x, target.y);
                                 for mob in map.tile_content[idx].iter() {
-                                    targets.push(*mob);
+                                    if let Some(_) = monsters.get(*mob) { targets.push(*mob); }
                                 }
                             }
                             Some(area_effect) => {
@@ -187,8 +187,8 @@ impl<'a> System<'a> for ActionSystem {
                 if let Some(action) = gain_card.get(intent.action) {
                     for _ in 0 .. action.number {
                         match action.to_hand {
-                            true => { to_gain.to_hand.push(action.card); }
-                            false => { to_gain.to_discard.push(action.card); }
+                            true => { gain_card_queue.to_hand.push(action.card); }
+                            false => { gain_card_queue.to_discard.push(action.card); }
                         }
                     }
                 }

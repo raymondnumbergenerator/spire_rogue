@@ -4,7 +4,7 @@ use rltk::{RGB, Rltk, VirtualKeyCode};
 use std::char;
 
 use super::{
-    CombatStats, Player, Map, Name, Position, Point, Viewshed,
+    CombatStats, Player, Creature, Map, Name, Position, Point, Viewshed,
     deck::Deck, util::utils, gamelog::GameLog, item, status,
     map::MAPWIDTH, map::MAPHEIGHT, WINDOWHEIGHT, deck::MAX_HAND_SIZE
 };
@@ -23,6 +23,7 @@ pub enum ItemMenuResult {
 fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
     let map = ecs.fetch::<Map>();
     let names = ecs.read_storage::<Name>();
+    let creatures = ecs.read_storage::<Creature>();
     let positions = ecs.read_storage::<Position>();
     let combat_stats = ecs.read_storage::<CombatStats>();
     let status_weak = ecs.read_storage::<status::Weak>();
@@ -43,7 +44,7 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
     }
 
     // Push combat stats to tooltips
-    for (position, combat_stat) in (&positions, &combat_stats).join() {
+    for (position, _, combat_stat) in (&positions, &creatures, &combat_stats).join() {
         let idx = map.xy_idx(position.x, position.y);
         if position.x == mouse_pos.0 && position.y == mouse_pos.1 && map.visible_tiles[idx] {
             tooltip.push(format!("{}/{}", combat_stat.hp, combat_stat.max_hp));
@@ -52,7 +53,7 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
     }
 
     // Push status effects to tooltips
-    for (position, weak, vulnerable, poison) in (&positions, status_weak.maybe(),status_vulnerable.maybe(), status_poison.maybe()).join() {
+    for (position, _, weak, vulnerable, poison) in (&positions, &creatures, status_weak.maybe(),status_vulnerable.maybe(), status_poison.maybe()).join() {
         let idx = map.xy_idx(position.x, position.y);
         if position.x == mouse_pos.0 && position.y == mouse_pos.1 && map.visible_tiles[idx] {
             if let Some(w) = weak { tooltip.push(format!("W{}", w.turns)); }

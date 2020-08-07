@@ -3,7 +3,7 @@ use specs::saveload::{SimpleMarker, MarkedBuilder};
 use rltk::{RGB, RandomNumberGenerator};
 
 use super::{
-    Position, Name, Renderable, Player, CombatStats, saveload,
+    Position, Name, Renderable, Player, CombatStats, Creature, saveload,
     Viewshed, Monster, BlocksTile, effects,
     cards, item, util::rect::Rect, map::MAPWIDTH,
 };
@@ -17,6 +17,7 @@ pub fn player(ecs: &mut World, x: i32, y: i32) -> Entity {
             bg: RGB::named(rltk::BLACK),
             render_order: 0,
         })
+        .with(Creature{})
         .marked::<SimpleMarker<saveload::SerializeMe>>()
         .with(Player{ max_energy: 3, energy: 3 })
         .with(Name{ name: "Ironclad".to_string() })
@@ -92,6 +93,7 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32,
             render_order: 1
         })
         .with(Monster{})
+        .with(Creature{})
         .with(Name{ name: name.to_string() })
         .with(Viewshed{ visible_tiles: Vec::new(), range: 8, dirty: true})
         .with(BlocksTile{})

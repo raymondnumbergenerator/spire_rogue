@@ -1,21 +1,9 @@
 use specs::prelude::*;
-use specs::saveload::{Marker, ConvertSaveload};
-use specs::error::NoError;
-use specs_derive::ConvertSaveload;
-use serde::{Serialize, Deserialize};
 
 use rand::thread_rng;
 use rand::seq::SliceRandom;
 
-use super::effects;
-
 pub const MAX_HAND_SIZE: usize = 10;
-
-#[derive(Clone, ConvertSaveload)]
-pub struct ToGain {
-    pub to_hand: Vec<effects::GainableCard>,
-    pub to_discard: Vec<effects::GainableCard>,
-}
 
 #[derive(Clone)]
 pub struct Deck {
