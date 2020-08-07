@@ -1,5 +1,5 @@
 use specs::prelude::*;
-use super::super::{gamelog::GameLog, creature, Name};
+use super::super::{GameLog, creature, Name};
 
 pub struct DamageSystem {}
 pub struct DeadCleanupSystem {}

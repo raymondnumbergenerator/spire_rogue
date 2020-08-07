@@ -1,6 +1,6 @@
 use specs::prelude::*;
 use super::super::{
-    Position, Name, gamelog::GameLog,
+    Position, Name, GameLog,
     item, intent, deck::Deck,
 };
 

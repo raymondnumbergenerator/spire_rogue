@@ -1,5 +1,5 @@
 use specs::prelude::*;
-use super::super::{intent, Name, creature, status, gamelog::GameLog};
+use super::super::{intent, Name, creature, status, GameLog};
 
 pub struct MeleeCombatSystem {}
 

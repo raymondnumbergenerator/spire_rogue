@@ -6,27 +6,28 @@ use rltk::{Rltk, GameState, Point};
 
 mod util;
 
+mod components;
+use components::component::{Name, Position, Renderable};
+use components::creature;
+use components::effects;
+use components::intent;
+use components::item;
+use components::status;
+
 mod gui;
+mod menu;
+
 mod gamelog;
+use gamelog::GameLog;
 mod map;
 use map::Map;
-mod menu;
 mod player;
-use player::*;
-mod saveload;
 
 mod cards;
 mod deck;
 mod spawner;
 
-mod creature;
-mod effects;
-mod item;
-mod intent;
-mod status;
-mod components;
-pub use components::*;
-
+mod saveload;
 mod systems;
 
 pub const WINDOWWIDTH: usize = 80;
@@ -143,7 +144,7 @@ impl GameState for State {
                 newrunstate = RunState::AwaitingInput;
             }
             RunState::AwaitingInput => {
-                newrunstate = player_input(self, ctx);
+                newrunstate = player::player_input(self, ctx);
             }
             RunState::PlayerTurn => {
                 self.run_systems();
@@ -349,8 +350,8 @@ fn main() -> rltk::BError {
     gs.ecs.register::<status::Vulnerable>();
     gs.ecs.register::<status::Poison>();
 
-    // Register <gamelog::GameLog> resource
-    gs.ecs.insert(gamelog::GameLog{ entries: Vec::new() });
+    // Register <GameLog> resource
+    gs.ecs.insert(GameLog{ entries: Vec::new() });
 
     // Register rng <rltk::RandomNumberGenerator> resource
     gs.ecs.insert(rltk::RandomNumberGenerator::new());

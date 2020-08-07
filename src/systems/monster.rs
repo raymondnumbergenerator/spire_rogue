@@ -1,5 +1,5 @@
 use specs::prelude::*;
-use super::super::{Name, gamelog::GameLog, Map, Position, creature, intent, RunState, status};
+use super::super::{Name, GameLog, Map, Position, creature, intent, RunState, status};
 
 use rltk::{Point};
 

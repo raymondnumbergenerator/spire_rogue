@@ -4,7 +4,7 @@ use specs::error::NoError;
 use specs_derive::{Component, ConvertSaveload};
 use serde::{Serialize, Deserialize};
 
-use super::cards;
+use super::super::cards;
 
 #[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct DealDamage {

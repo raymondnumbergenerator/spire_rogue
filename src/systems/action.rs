@@ -1,6 +1,6 @@
 use specs::prelude::*;
 use super::super::{
-    Name, creature, gamelog::GameLog,
+    Name, creature, GameLog,
     intent, item, deck, Map,
     effects, status
 };
@@ -174,25 +174,21 @@ impl<'a> System<'a> for ActionSystem {
             }
 
             // Draw cards
-            {
-                if let Some(action) = effect_draw.get(intent.action) {
-                    for _ in 0 .. action.number {
-                        deck.draw_card();
-                    }
+            if let Some(action) = effect_draw.get(intent.action) {
+                for _ in 0 .. action.number {
+                    deck.draw_card();
                 }
-            }
+            };
 
             // Add cards to the to_gain card queue
-            {
-                if let Some(action) = gain_card.get(intent.action) {
-                    for _ in 0 .. action.number {
-                        match action.to_hand {
-                            true => { gain_card_queue.to_hand.push(action.card); }
-                            false => { gain_card_queue.to_discard.push(action.card); }
-                        }
+            if let Some(action) = gain_card.get(intent.action) {
+                for _ in 0 .. action.number {
+                    match action.to_hand {
+                        true => { gain_card_queue.to_hand.push(action.card); }
+                        false => { gain_card_queue.to_discard.push(action.card); }
                     }
                 }
-            }
+            };
             
             // Discard used card or remove used potion
             if let Some(_) = cards.get(intent.action) {

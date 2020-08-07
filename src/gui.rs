@@ -5,7 +5,7 @@ use std::char;
 
 use super::{
     Map, Name, Position, Point, creature,
-    deck::Deck, util::utils, gamelog::GameLog, item, status,
+    deck::Deck, util::utils, GameLog, item, status,
     map::MAPWIDTH, map::MAPHEIGHT, WINDOWHEIGHT, deck::MAX_HAND_SIZE
 };
 

@@ -24,7 +24,6 @@ fn strike(ecs: &mut World) -> Entity {
 
 fn defend(ecs: &mut World) -> Entity {
     build_card(ecs, "Defend", 1)
-        .with(item::SelfTargeted{})
         .with(effects::GainBlock{ amount: 5 })
         .build()
 }
@@ -39,7 +38,6 @@ fn neutralize(ecs: &mut World) -> Entity {
 
 fn survivor(ecs: &mut World) -> Entity {
     build_card(ecs, "Survivor", 1)
-        .with(item::SelfTargeted{})
         .with(effects::GainBlock{ amount: 8 })
         .with(effects::DiscardCard{ number: 1 })
         .build()
