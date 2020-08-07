@@ -7,14 +7,14 @@ pub struct MonsterSystem {}
 
 impl<'a> System<'a> for MonsterSystem {
     type SystemData = (
-        WriteExpect<'a, Map>,
-        WriteExpect<'a, GameLog>,
-        ReadExpect<'a, Point>,
+        Entities<'a>,
         ReadExpect<'a, Entity>,
+        ReadExpect<'a, Point>,
+        ReadExpect<'a, RunState>,
+        WriteExpect<'a, GameLog>,
+        WriteExpect<'a, Map>,
         ReadStorage<'a, Name>,
         WriteStorage<'a, Position>,
-        ReadExpect<'a, RunState>,
-        Entities<'a>,
         WriteStorage<'a, creature::Viewshed>,
         ReadStorage<'a, creature::Monster>,
         WriteStorage<'a, creature::CombatStats>,
@@ -23,7 +23,7 @@ impl<'a> System<'a> for MonsterSystem {
     );
 
     fn run(&mut self, data : Self::SystemData) {
-        let (mut map, mut log, player_pos, player_entity, names, mut positions, runstate, entities,
+        let (entities, player_entity, player_pos, runstate, mut log, mut map, names, mut positions,
             mut viewshed, monster, mut combat_stats, mut intent_melee, mut status_poison) = data;
         
         // Skip if not on monsterturn

@@ -5,10 +5,10 @@ pub struct EndTurnSystem {}
 
 impl<'a> System<'a> for EndTurnSystem {
     type SystemData = (
-        ReadExpect<'a, RunState>,
-        WriteExpect<'a, GameLog>,
         Entities<'a>,
         ReadExpect<'a, Entity>,
+        ReadExpect<'a, RunState>,
+        WriteExpect<'a, GameLog>,
         ReadStorage<'a, Name>,
         ReadStorage<'a, creature::Monster>,
         WriteStorage<'a, creature::CombatStats>,
@@ -17,7 +17,7 @@ impl<'a> System<'a> for EndTurnSystem {
     );
 
     fn run(&mut self, data : Self::SystemData) {
-        let (runstate, mut log, entities, player_ent, names, monsters, mut combat_stats, mut status_weak, mut status_vulnerable) = data;
+        let (entities, player_entity, runstate, mut log, names, monsters, mut combat_stats, mut status_weak, mut status_vulnerable) = data;
 
         // Skip if not on endturn
         let turn: bool;
@@ -31,7 +31,7 @@ impl<'a> System<'a> for EndTurnSystem {
             let mut to_remove = Vec::new();
             for (ent, mut weak) in (&entities, &mut status_weak).join() {
                 if turn {
-                    if ent == *player_ent { weak.turns -= 1; }
+                    if ent == *player_entity { weak.turns -= 1; }
                 } else {
                     if let Some(_) = monsters.get(ent) {
                         weak.turns -= 1;
@@ -54,7 +54,7 @@ impl<'a> System<'a> for EndTurnSystem {
             let mut to_remove = Vec::new();
             for (ent, mut vulnerable) in (&entities, &mut status_vulnerable).join() {
                 if turn {
-                    if ent == *player_ent { vulnerable.turns -= 1; }
+                    if ent == *player_entity { vulnerable.turns -= 1; }
                 } else {
                     if let Some(_) = monsters.get(ent) {
                         vulnerable.turns -= 1;
@@ -75,9 +75,9 @@ impl<'a> System<'a> for EndTurnSystem {
         // Decay all block
         for (ent, mut stats) in (&entities, &mut combat_stats).join() {
             if turn {
-                if !(ent == *player_ent) { stats.block = 0; }
+                if !(ent == *player_entity) { stats.block = 0; }
             } else {
-                if ent == *player_ent { stats.block = 0; }
+                if ent == *player_entity { stats.block = 0; }
             }
         }
 

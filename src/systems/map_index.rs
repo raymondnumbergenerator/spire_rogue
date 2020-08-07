@@ -5,13 +5,14 @@ pub struct MapIndexSystem {}
 
 impl<'a> System<'a> for MapIndexSystem {
     type SystemData = (
+        Entities<'a>,
         WriteExpect<'a, Map>,
         ReadStorage<'a, Position>,
         ReadStorage<'a, BlocksTile>,
-        Entities<'a>);
+    );
 
     fn run(&mut self, data : Self::SystemData) {
-        let (mut map, position, blockers, entities) = data;
+        let (entities, mut map, position, blockers) = data;
 
         map.populate_blocked();
         map.clear_content_index();

@@ -9,9 +9,9 @@ pub struct ActionSystem {}
 
 impl<'a> System<'a> for ActionSystem {
     type SystemData = (
+        Entities<'a>,
         ReadExpect<'a, Entity>,
         WriteExpect<'a, GameLog>,
-        Entities<'a>,
         ReadExpect<'a, Map>,
         ReadStorage<'a, Name>,
         WriteStorage<'a, creature::Player>,
@@ -36,7 +36,7 @@ impl<'a> System<'a> for ActionSystem {
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (player_entity, mut log, entities, map, names,
+        let (entities, player_entity, mut log, map, names,
             mut player, monsters, mut combat_stats, mut suffer_damage,
             mut deck, potions, ethereal, self_targeted, aoe, cards, mut intent_action,
             effect_gain_block, effect_deal_damage, effect_draw, gain_card, mut gain_card_queue,

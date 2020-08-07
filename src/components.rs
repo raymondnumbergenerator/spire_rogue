@@ -5,6 +5,11 @@ use specs_derive::{Component, ConvertSaveload};
 use serde::{Serialize, Deserialize};
 use rltk::{RGB};
 
+#[derive(Component, Debug, ConvertSaveload, Clone)]
+pub struct Name {
+    pub name: String
+}
+
 #[derive(Component, ConvertSaveload, Clone)]
 pub struct Position {
     pub x: i32,
@@ -17,9 +22,4 @@ pub struct Renderable {
     pub fg: RGB,
     pub bg: RGB,
     pub render_order: i32,
-}
-
-#[derive(Component, Debug, ConvertSaveload, Clone)]
-pub struct Name {
-    pub name: String
 }

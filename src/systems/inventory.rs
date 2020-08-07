@@ -8,17 +8,17 @@ pub struct InventorySystem {}
 
 impl<'a> System<'a> for InventorySystem {
     type SystemData = (
+        WriteExpect<'a, Deck>,
         WriteExpect<'a, GameLog>,
         ReadStorage<'a, Name>,
         WriteStorage<'a, Position>,
         WriteStorage<'a, intent::PickupItem>,
         ReadStorage<'a, item::Potion>,
         WriteStorage<'a, item::InBackpack>,
-        WriteExpect<'a, Deck>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (mut log, names, mut positions, mut intent_pickup, potions, mut backpack, mut deck) = data;
+        let (mut deck, mut log, names, mut positions, mut intent_pickup, potions, mut backpack) = data;
 
         for intent in intent_pickup.join() {
             positions.remove(intent.item);

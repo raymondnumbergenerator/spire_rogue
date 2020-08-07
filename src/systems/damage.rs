@@ -34,14 +34,14 @@ impl<'a> System<'a> for DamageSystem {
 impl<'a>System<'a> for DeadCleanupSystem {
     type SystemData = (
         Entities<'a>,
+        ReadExpect<'a, Entity>,
+        WriteExpect<'a, GameLog>,
         ReadStorage<'a, Name>,
         ReadStorage<'a, creature::CombatStats>,
-        WriteExpect<'a, GameLog>,
-        ReadExpect<'a, Entity>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, names, combat_stats, mut log, player_entity) = data;
+        let (entities, player_entity, mut log, names, combat_stats) = data;
 
         let mut dead: Vec<Entity> = Vec::new();
         for (entity, stats) in (&entities, &combat_stats).join() {

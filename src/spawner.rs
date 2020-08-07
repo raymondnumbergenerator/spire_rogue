@@ -3,13 +3,14 @@ use specs::saveload::{SimpleMarker, MarkedBuilder};
 use rltk::{RGB, RandomNumberGenerator};
 
 use super::{
-    Position, Name, Renderable, saveload,
+    Name, Position, Renderable, saveload,
     creature, effects, cards, item,
     util::rect::Rect, map::MAPWIDTH,
 };
 
 pub fn player(ecs: &mut World, x: i32, y: i32) -> Entity {
     ecs.create_entity()
+        .with(Name{ name: "Ironclad".to_string() })
         .with(Position{ x, y })
         .with(Renderable{
             glyph: rltk::to_cp437('@'),
@@ -17,7 +18,6 @@ pub fn player(ecs: &mut World, x: i32, y: i32) -> Entity {
             bg: RGB::named(rltk::BLACK),
             render_order: 0,
         })
-        .with(Name{ name: "Ironclad".to_string() })
         .with(creature::Creature{})
         .with(creature::Player{ max_energy: 3, energy: 3 })
         .with(creature::CombatStats{ max_hp: 70, hp: 70, dexterity: 0, strength: 0, block: 0 })
@@ -80,10 +80,9 @@ fn potion_explosive(ecs: &mut World, x: i32, y: i32) {
         .build();
 }
 
-fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32,
-            hp: i32,
-            glyph: rltk::FontCharType, fg: RGB, name: S) {
+fn build_monster<S: ToString>(ecs: &mut World, name: S, x: i32, y: i32, glyph: rltk::FontCharType, fg: RGB,) -> EntityBuilder {
     ecs.create_entity()
+        .with(Name{ name: name.to_string() })
         .with(Position{ x, y })
         .with(Renderable{
             glyph,
@@ -91,29 +90,32 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32,
             bg: RGB::named(rltk::BLACK),
             render_order: 1
         })
-        .with(Name{ name: name.to_string() })
         .with(creature::Creature{})
         .with(creature::Monster{})
-        .with(creature::CombatStats{ max_hp: hp, hp: hp, dexterity: 0, strength: 4, block: 0 })
         .with(creature::Viewshed{ visible_tiles: Vec::new(), range: 8, dirty: true})
         .with(creature::BlocksTile{})
         .marked::<SimpleMarker<saveload::SerializeMe>>()
-        .build();
 }
 
 fn monster_cultist(ecs: &mut World, x: i32, y: i32) {
     let hp = ecs.write_resource::<RandomNumberGenerator>().range(48, 55);
-    monster(ecs, x, y, hp, rltk::to_cp437('c'), RGB::named(rltk::RED), "Cultist");
+    build_monster(ecs, "Cultist", x, y, rltk::to_cp437('c'), RGB::named(rltk::RED))
+        .with(creature::CombatStats{ max_hp: hp, hp: hp, dexterity: 0, strength: 4, block: 0 })
+        .build();
 }
 
 fn monster_louse(ecs: &mut World, x: i32, y: i32) {
     let hp = ecs.write_resource::<RandomNumberGenerator>().range(10, 16);
-    monster(ecs, x, y, hp, rltk::to_cp437('l'), RGB::named(rltk::RED), "Louse");
+    build_monster(ecs, "Louse", x, y, rltk::to_cp437('l'), RGB::named(rltk::RED))
+        .with(creature::CombatStats{ max_hp: hp, hp: hp, dexterity: 0, strength: 4, block: 0 })
+        .build();
 }
 
 fn monster_jaw_worm(ecs: &mut World, x: i32, y: i32) {
     let hp = ecs.write_resource::<RandomNumberGenerator>().range(40, 45);
-    monster(ecs, x, y, hp, rltk::to_cp437('j'), RGB::named(rltk::RED), "Jaw Worm");
+    build_monster(ecs, "Jaw Worm", x, y, rltk::to_cp437('j'), RGB::named(rltk::RED))
+        .with(creature::CombatStats{ max_hp: hp, hp: hp, dexterity: 0, strength: 4, block: 0 })
+        .build();
 }
 
 pub fn random_monster(ecs: &mut World, x: i32, y: i32) {

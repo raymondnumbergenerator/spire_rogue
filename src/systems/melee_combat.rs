@@ -7,15 +7,15 @@ impl<'a> System<'a> for MeleeCombatSystem {
     type SystemData = (
         Entities<'a>,
         WriteExpect<'a, GameLog>,
-        WriteStorage<'a, intent::MeleeTarget>,
         ReadStorage<'a, Name>,
+        WriteStorage<'a, intent::MeleeTarget>,
         ReadStorage<'a, creature::CombatStats>,
         WriteStorage<'a, creature::SufferDamage>,
         WriteStorage<'a, status::Weak>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, mut log, mut intent_melee, names, combat_stats, mut suffer_damage, mut statusweak) = data;
+        let (entities, mut log, names, mut intent_melee, combat_stats, mut suffer_damage, mut statusweak) = data;
 
         for (ent, intent_melee, name, stats) in (&entities, &intent_melee, &names, &combat_stats).join() {
             if stats.hp > 0 {

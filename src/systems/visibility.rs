@@ -11,7 +11,8 @@ impl<'a> System<'a> for VisibilitySystem {
         WriteExpect<'a, Map>,
         WriteStorage<'a, Position>,
         ReadStorage<'a, creature::Player>,
-        WriteStorage<'a, creature::Viewshed>);
+        WriteStorage<'a, creature::Viewshed>
+    );
 
     fn run(&mut self, data: Self::SystemData) {
         let (entities, mut map, pos, player, mut viewshed) = data;

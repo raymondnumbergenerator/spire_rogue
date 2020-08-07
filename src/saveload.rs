@@ -12,7 +12,7 @@ const SAVE_PATH: &str = "./save.json";
 
 use super::{
     util::entityvec::EntityVec,
-    Map, deck, Position, Renderable, Name,
+    Name, Position, Renderable, Map, deck,
     creature, effects, item, intent, status
 };
 
@@ -95,7 +95,7 @@ pub fn save_game(ecs: &mut World) {
         let writer = File::create(SAVE_PATH).unwrap();
         let mut serializer = serde_json::Serializer::new(writer);
         serialize_individually!(
-            ecs, serializer, data, SerializableResources, SerializableDeck, Position, Renderable, Name,
+            ecs, serializer, data, SerializableResources, SerializableDeck, Name, Position, Renderable,
             creature::Player, creature::Monster, creature::BlocksTile, creature::Viewshed, creature::SufferDamage,
             item::Item, item::Card, item::Potion, item::Ethereal, item::InBackpack, item::Targeted, item::SelfTargeted, item::AreaOfEffect,
             effects::DealDamage, effects::GainBlock, effects::DiscardCard, effects::DrawCard, effects::GainCard,
@@ -125,7 +125,7 @@ pub fn load_game(ecs: &mut World) {
         let mut deserializer = serde_json::Deserializer::from_str(&save_data);
         let mut data = (&mut ecs.entities(), &mut ecs.write_storage::<SimpleMarker<SerializeMe>>(), &mut ecs.write_resource::<SimpleMarkerAllocator<SerializeMe>>());
         deserialize_individually!(
-            ecs, deserializer, data, SerializableResources, SerializableDeck, Position, Renderable, Name,
+            ecs, deserializer, data, SerializableResources, SerializableDeck, Name, Position, Renderable,
             creature::Player, creature::Monster, creature::BlocksTile, creature::Viewshed, creature::SufferDamage,
             item::Item, item::Card, item::Potion, item::Ethereal, item::InBackpack, item::Targeted, item::SelfTargeted, item::AreaOfEffect,
             effects::DealDamage, effects::GainBlock, effects::DiscardCard, effects::DrawCard, effects::GainCard,
