@@ -41,7 +41,7 @@ pub enum RunState {
     EndTurn { player_turn: bool },
     MonsterTurn,
     ShowInventory,
-    ShowHand,
+    ShowHand { selection: i32 },
     ShowTargeting { range: i32, radius: i32, item: Entity },
     DiscardCard { number: i32 },
     MainMenu { menu_selection: menu::MainMenuSelection },
@@ -144,7 +144,7 @@ impl GameState for State {
                 newrunstate = RunState::AwaitingInput;
             }
             RunState::AwaitingInput => {
-                newrunstate = player::player_input(self, ctx);
+                newrunstate = player::player_input(&mut self.ecs, ctx);
             }
             RunState::PlayerTurn => {
                 self.run_systems();
@@ -198,9 +198,8 @@ impl GameState for State {
                     }
                 }
             }
-            RunState::ShowHand => {
-                let result = gui::draw_hand(&mut self.ecs, ctx);
-                gui::draw_play_hand(ctx);
+            RunState::ShowHand{selection} => {
+                let result = gui::pick_card(&mut self.ecs, selection);
                 match result.0 {
                     gui::ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
                     gui::ItemMenuResult::NoResponse => {},
@@ -258,8 +257,7 @@ impl GameState for State {
                 if number == 0 || hand_len == 0 {
                     newrunstate = RunState::PlayerTurn;
                 } else {
-                    let result = gui::draw_hand(&mut self.ecs, ctx);
-                    gui::draw_discard_hand(ctx, number);
+                    let result = gui::discard_card(&mut self.ecs, ctx, number);
                     match result.0 {
                         gui::ItemMenuResult::Selected => {
                             let mut deck = self.ecs.write_resource::<deck::Deck>();

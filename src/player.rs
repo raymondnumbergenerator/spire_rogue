@@ -88,22 +88,31 @@ fn end_turn(ecs: &mut World) {
     restore_energy(ecs);
 }
 
-pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
+pub fn player_input(ecs: &mut World, ctx: &mut Rltk) -> RunState {
     match ctx.key {
         None => { return RunState::AwaitingInput }
         Some(key) => match key {
-            VirtualKeyCode::A => return move_player(-1, 0, &mut gs.ecs),
-            VirtualKeyCode::D => return move_player(1, 0, &mut gs.ecs),
-            VirtualKeyCode::W => return move_player(0, -1, &mut gs.ecs),
-            VirtualKeyCode::S => return move_player(0, 1, &mut gs.ecs),
-            VirtualKeyCode::Q => return move_player(-1, -1, &mut gs.ecs),
-            VirtualKeyCode::E => return move_player(1, -1, &mut gs.ecs),
-            VirtualKeyCode::Z => return move_player(-1, 1, &mut gs.ecs),
-            VirtualKeyCode::C => return move_player(1, 1, &mut gs.ecs),
+            VirtualKeyCode::A => return move_player(-1, 0, ecs),
+            VirtualKeyCode::D => return move_player(1, 0, ecs),
+            VirtualKeyCode::W => return move_player(0, -1, ecs),
+            VirtualKeyCode::S => return move_player(0, 1, ecs),
+            VirtualKeyCode::Q => return move_player(-1, -1, ecs),
+            VirtualKeyCode::E => return move_player(1, -1, ecs),
+            VirtualKeyCode::Z => return move_player(-1, 1, ecs),
+            VirtualKeyCode::C => return move_player(1, 1, ecs),
             VirtualKeyCode::P => return RunState::ShowInventory,
-            VirtualKeyCode::Tab => return RunState::ShowHand,
-            VirtualKeyCode::Space => end_turn(&mut gs.ecs),
-            VirtualKeyCode::G => get_item(&mut gs.ecs),
+            VirtualKeyCode::Key1 => return RunState::ShowHand{ selection: 0 },
+            VirtualKeyCode::Key2 => return RunState::ShowHand{ selection: 1 },
+            VirtualKeyCode::Key3 => return RunState::ShowHand{ selection: 2 },
+            VirtualKeyCode::Key4 => return RunState::ShowHand{ selection: 3 },
+            VirtualKeyCode::Key5 => return RunState::ShowHand{ selection: 4 },
+            VirtualKeyCode::Key6 => return RunState::ShowHand{ selection: 5 },
+            VirtualKeyCode::Key7 => return RunState::ShowHand{ selection: 6 },
+            VirtualKeyCode::Key8 => return RunState::ShowHand{ selection: 7 },
+            VirtualKeyCode::Key9 => return RunState::ShowHand{ selection: 8 },
+            VirtualKeyCode::Key0 => return RunState::ShowHand{ selection: 9 },
+            VirtualKeyCode::Space => end_turn(ecs),
+            VirtualKeyCode::G => get_item(ecs),
             VirtualKeyCode::Escape => return RunState::SaveGame,
             _ => { return RunState::AwaitingInput }
         }

@@ -194,15 +194,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
     draw_hand(ecs, ctx);
 }
 
-pub fn draw_play_hand(ctx: &mut Rltk) {
-    ctx.print_color(INVENTORYPOS + 2, WINDOWHEIGHT - 1, RGB::named(rltk::YELLOW), RGB::named(rltk::BLACK), "ESC to cancel");
-}
-
-pub fn draw_discard_hand(ctx: &mut Rltk, number: i32) {
-    ctx.print_color(INVENTORYPOS + 2, WINDOWHEIGHT - 1, RGB::named(rltk::YELLOW), RGB::named(rltk::BLACK), format!("Discard {} cards", number));
-}
-
-pub fn draw_hand(ecs: &World, ctx: &mut Rltk) -> (ItemMenuResult, Option<Entity>) {
+pub fn draw_hand(ecs: &World, ctx: &mut Rltk)  {
     let deck = ecs.write_resource::<Deck>();
     let cards = ecs.read_storage::<item::Card>();
     let names = ecs.read_storage::<Name>();
@@ -229,21 +221,38 @@ pub fn draw_hand(ecs: &World, ctx: &mut Rltk) -> (ItemMenuResult, Option<Entity>
         y += 1;
         i += 1;
     }
+}
+
+pub fn pick_card(ecs: &World, selection: i32) -> (ItemMenuResult, Option<Entity>) {
+    let cards = ecs.read_storage::<item::Card>();
+    let deck = ecs.write_resource::<Deck>();
+    let hand = &deck.hand;
+
+    let player_entity = ecs.fetch::<Entity>();
+    let players = ecs.read_storage::<creature::Player>();
+    let player_energy = players.get(*player_entity).unwrap();
+
+    if selection > -1 && selection < hand.len() as i32 &&
+        cards.get(hand[selection as usize]).unwrap().energy_cost <= player_energy.energy {
+        return (ItemMenuResult::Selected, Some(hand[selection as usize]));
+    }
+    (ItemMenuResult::Cancel, None)
+}
+
+pub fn discard_card(ecs: &World, ctx: &mut Rltk, number: i32) -> (ItemMenuResult, Option<Entity>) {
+    ctx.print_color(INVENTORYPOS + 2, WINDOWHEIGHT - 1, RGB::named(rltk::YELLOW), RGB::named(rltk::BLACK), format!("Discard {} cards", number));
+
+    let deck = ecs.write_resource::<Deck>();
+    let hand = &deck.hand;
 
     match ctx.key {
         None => (ItemMenuResult::NoResponse, None),
         Some(key) => {
-            match key {
-                VirtualKeyCode::Escape => { (ItemMenuResult::Cancel, None) }
-                _ => {
-                    let selection = utils::number_to_option(key) - 1;
-                    if selection > -1 && selection < hand.len() as i32 &&
-                        cards.get(hand[selection as usize]).unwrap().energy_cost <= player_energy.energy {
-                        return (ItemMenuResult::Selected, Some(hand[selection as usize]));
-                    }
-                    (ItemMenuResult::NoResponse, None)
-                }
+            let selection = utils::number_to_option(key);
+            if selection > -1 && selection < hand.len() as i32 {
+                return (ItemMenuResult::Selected, Some(hand[selection as usize]));
             }
+            (ItemMenuResult::NoResponse, None)
         }
     }
 }
