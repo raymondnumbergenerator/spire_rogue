@@ -1,7 +1,7 @@
 use specs::prelude::*;
 use super::{
-    Position, Player, State, Map, Viewshed, RunState,
-    item, intent,
+    Position, State, Map, RunState,
+    creature, item, intent,
     deck::Deck
 };
 
@@ -11,8 +11,8 @@ use std::cmp::{max, min};
 pub fn move_player(delta_x: i32, delta_y: i32, ecs: &mut World) -> RunState {
     let mut positions = ecs.write_storage::<Position>();
     let mut ppos = ecs.write_resource::<Point>();
-    let mut players = ecs.write_storage::<Player>();
-    let mut viewsheds = ecs.write_storage::<Viewshed>();
+    let mut players = ecs.write_storage::<creature::Player>();
+    let mut viewsheds = ecs.write_storage::<creature::Viewshed>();
     let map = ecs.fetch::<Map>();
 
     for (_player, pos, viewshed) in (&mut players, &mut positions, &mut viewsheds).join() {
@@ -76,7 +76,7 @@ fn redraw_hand(ecs: &mut World) {
 
 fn restore_energy(ecs: &mut World) {
     let player_entity = ecs.fetch::<Entity>();
-    let mut player = ecs.write_storage::<Player>();
+    let mut player = ecs.write_storage::<creature::Player>();
 
     if let Some(player_energy) = player.get_mut(*player_entity) {
         player_energy.energy = player_energy.max_energy;

@@ -4,7 +4,7 @@ use rltk::{RGB, Rltk, VirtualKeyCode};
 use std::char;
 
 use super::{
-    CombatStats, Player, Creature, Map, Name, Position, Point, Viewshed,
+    Map, Name, Position, Point, creature,
     deck::Deck, util::utils, gamelog::GameLog, item, status,
     map::MAPWIDTH, map::MAPHEIGHT, WINDOWHEIGHT, deck::MAX_HAND_SIZE
 };
@@ -23,9 +23,9 @@ pub enum ItemMenuResult {
 fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
     let map = ecs.fetch::<Map>();
     let names = ecs.read_storage::<Name>();
-    let creatures = ecs.read_storage::<Creature>();
     let positions = ecs.read_storage::<Position>();
-    let combat_stats = ecs.read_storage::<CombatStats>();
+    let creatures = ecs.read_storage::<creature::Creature>();
+    let combat_stats = ecs.read_storage::<creature::CombatStats>();
     let status_weak = ecs.read_storage::<status::Weak>();
     let status_vulnerable = ecs.read_storage::<status::Vulnerable>();
     let status_poison = ecs.read_storage::<status::Poison>();
@@ -116,7 +116,7 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
 pub fn ranged_target(ecs: &World, ctx: &mut Rltk, range: i32, radius: i32) -> (ItemMenuResult, Option<Point>) {
     let player_entity = ecs.fetch::<Entity>();
     let player_pos = ecs.fetch::<Point>();
-    let viewsheds = ecs.read_storage::<Viewshed>();
+    let viewsheds = ecs.read_storage::<creature::Viewshed>();
     let mouse_pos = ctx.mouse_pos();
     let mouse_point = Point::new(mouse_pos.0, mouse_pos.1);
 
@@ -168,8 +168,8 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
     ctx.draw_box(0, MAPHEIGHT, MAPWIDTH - INVENTORYWIDTH - 1, GUISIZE - 1, RGB::named(rltk::WHITE), RGB::named(rltk::BLACK));
 
     // Draw player stats
-    let combat_stats = ecs.read_storage::<CombatStats>();
-    let players = ecs.read_storage::<Player>();
+    let combat_stats = ecs.read_storage::<creature::CombatStats>();
+    let players = ecs.read_storage::<creature::Player>();
     for (_player, stats) in (&players, &combat_stats).join() {
         let health = format!("HP: {} / {}", stats.hp, stats.max_hp);
         let block = format!("[{}]", stats.block);
@@ -208,7 +208,7 @@ pub fn draw_hand(ecs: &World, ctx: &mut Rltk) -> (ItemMenuResult, Option<Entity>
     let names = ecs.read_storage::<Name>();
 
     let player_entity = ecs.fetch::<Entity>();
-    let players = ecs.read_storage::<Player>();
+    let players = ecs.read_storage::<creature::Player>();
     let player_energy = players.get(*player_entity).unwrap();
 
     let mut y = MAPHEIGHT as i32;

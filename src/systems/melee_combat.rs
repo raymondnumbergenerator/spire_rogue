@@ -1,5 +1,5 @@
 use specs::prelude::*;
-use super::super::{CombatStats, intent, Name, SufferDamage, status, gamelog::GameLog};
+use super::super::{intent, Name, creature, status, gamelog::GameLog};
 
 pub struct MeleeCombatSystem {}
 
@@ -9,8 +9,8 @@ impl<'a> System<'a> for MeleeCombatSystem {
         WriteExpect<'a, GameLog>,
         WriteStorage<'a, intent::MeleeTarget>,
         ReadStorage<'a, Name>,
-        ReadStorage<'a, CombatStats>,
-        WriteStorage<'a, SufferDamage>,
+        ReadStorage<'a, creature::CombatStats>,
+        WriteStorage<'a, creature::SufferDamage>,
         WriteStorage<'a, status::Weak>,
     );
 
@@ -30,7 +30,7 @@ impl<'a> System<'a> for MeleeCombatSystem {
                     }
 
                     log.push(format!("{} hits {} for {} damage.", &name.name, &target_name.name, damage));
-                    SufferDamage::new_damage(&mut suffer_damage, intent_melee.target, damage);
+                    creature::SufferDamage::new_damage(&mut suffer_damage, intent_melee.target, damage);
                 }
             }
         }

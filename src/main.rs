@@ -19,6 +19,7 @@ mod cards;
 mod deck;
 mod spawner;
 
+mod creature;
 mod effects;
 mod item;
 mod intent;
@@ -311,14 +312,16 @@ fn main() -> rltk::BError {
     // Register components
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
-    gs.ecs.register::<Creature>();
-    gs.ecs.register::<Player>();
-    gs.ecs.register::<Viewshed>();
-    gs.ecs.register::<Monster>();
     gs.ecs.register::<Name>();
-    gs.ecs.register::<BlocksTile>();
-    gs.ecs.register::<CombatStats>();
-    gs.ecs.register::<SufferDamage>();
+
+    gs.ecs.register::<creature::Creature>();
+    gs.ecs.register::<creature::Player>();
+    gs.ecs.register::<creature::Monster>();
+    gs.ecs.register::<creature::CombatStats>();
+    gs.ecs.register::<creature::BlocksTile>();
+    gs.ecs.register::<creature::Viewshed>();
+    gs.ecs.register::<creature::SufferDamage>();
+
     gs.ecs.register::<SimpleMarker<saveload::SerializeMe>>();
     gs.ecs.register::<saveload::SerializableResources>();
     gs.ecs.register::<saveload::SerializableDeck>();

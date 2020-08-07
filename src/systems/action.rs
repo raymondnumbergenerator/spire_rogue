@@ -1,7 +1,7 @@
 use specs::prelude::*;
 use super::super::{
-    Name, Player, Monster, CombatStats, gamelog::GameLog,
-    intent, item, deck, Map, SufferDamage,
+    Name, creature, gamelog::GameLog,
+    intent, item, deck, Map,
     effects, status
 };
 
@@ -12,10 +12,12 @@ impl<'a> System<'a> for ActionSystem {
         ReadExpect<'a, Entity>,
         WriteExpect<'a, GameLog>,
         Entities<'a>,
-        WriteStorage<'a, Player>,
-        ReadStorage<'a, Monster>,
         ReadExpect<'a, Map>,
         ReadStorage<'a, Name>,
+        WriteStorage<'a, creature::Player>,
+        ReadStorage<'a, creature::Monster>,
+        WriteStorage<'a, creature::CombatStats>,
+        WriteStorage<'a, creature::SufferDamage>,
         WriteExpect<'a, deck::Deck>,
         ReadStorage<'a, item::Potion>,
         ReadStorage<'a, item::Ethereal>,
@@ -23,8 +25,6 @@ impl<'a> System<'a> for ActionSystem {
         ReadStorage<'a, item::AreaOfEffect>,
         ReadStorage<'a, item::Card>,
         WriteStorage<'a, intent::PerformAction>,
-        WriteStorage<'a, CombatStats>,
-        WriteStorage<'a, SufferDamage>,
         ReadStorage<'a, effects::GainBlock>,
         ReadStorage<'a, effects::DealDamage>,
         ReadStorage<'a, effects::DrawCard>,
@@ -36,9 +36,9 @@ impl<'a> System<'a> for ActionSystem {
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (player_entity, mut log, entities, mut player, monsters, map, names, 
-            mut deck, potions, ethereal, self_targeted, aoe, cards,
-            mut intent_action, mut combat_stats, mut suffer_damage,
+        let (player_entity, mut log, entities, map, names,
+            mut player, monsters, mut combat_stats, mut suffer_damage,
+            mut deck, potions, ethereal, self_targeted, aoe, cards, mut intent_action,
             effect_gain_block, effect_deal_damage, effect_draw, gain_card, mut gain_card_queue,
             mut status_weak, mut status_vulnerable, mut status_poison) = data;
 
@@ -97,7 +97,7 @@ impl<'a> System<'a> for ActionSystem {
                         dmg = (dmg as f32 * 1.5) as i32;
                     }
 
-                    SufferDamage::new_damage(&mut suffer_damage, *target, dmg);
+                    creature::SufferDamage::new_damage(&mut suffer_damage, *target, dmg);
                     if entity == *player_entity {
                         log.push(format!("You use {} on {} for {} damage.",
                             names.get(intent.action).unwrap().name,

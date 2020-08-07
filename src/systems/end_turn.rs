@@ -1,5 +1,5 @@
 use specs::prelude::*;
-use super::super::{Name, Monster, gamelog::GameLog, RunState, CombatStats, status};
+use super::super::{Name, gamelog::GameLog, RunState, creature, status};
 
 pub struct EndTurnSystem {}
 
@@ -10,8 +10,8 @@ impl<'a> System<'a> for EndTurnSystem {
         Entities<'a>,
         ReadExpect<'a, Entity>,
         ReadStorage<'a, Name>,
-        ReadStorage<'a, Monster>,
-        WriteStorage<'a, CombatStats>,
+        ReadStorage<'a, creature::Monster>,
+        WriteStorage<'a, creature::CombatStats>,
         WriteStorage<'a, status::Weak>,
         WriteStorage<'a, status::Vulnerable>,
     );

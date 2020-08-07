@@ -12,9 +12,8 @@ const SAVE_PATH: &str = "./save.json";
 
 use super::{
     util::entityvec::EntityVec,
-    Map, deck, Position, Renderable, Viewshed, BlocksTile, Name, CombatStats,
-    Player, Monster, Creature, SufferDamage,
-    effects, item, intent, status
+    Map, deck, Position, Renderable, Name,
+    creature, effects, item, intent, status
 };
 
 pub struct SerializeMe;
@@ -96,8 +95,8 @@ pub fn save_game(ecs: &mut World) {
         let writer = File::create(SAVE_PATH).unwrap();
         let mut serializer = serde_json::Serializer::new(writer);
         serialize_individually!(
-            ecs, serializer, data, SerializableResources, SerializableDeck, Position, Renderable, Viewshed,
-            BlocksTile, Name, CombatStats, Player, Monster, Creature, SufferDamage,
+            ecs, serializer, data, SerializableResources, SerializableDeck, Position, Renderable, Name,
+            creature::Player, creature::Monster, creature::BlocksTile, creature::Viewshed, creature::SufferDamage,
             item::Item, item::Card, item::Potion, item::Ethereal, item::InBackpack, item::Targeted, item::SelfTargeted, item::AreaOfEffect,
             effects::DealDamage, effects::GainBlock, effects::DiscardCard, effects::DrawCard, effects::GainCard,
             intent::PerformAction, intent::PickupItem, intent::MeleeTarget,
@@ -126,8 +125,8 @@ pub fn load_game(ecs: &mut World) {
         let mut deserializer = serde_json::Deserializer::from_str(&save_data);
         let mut data = (&mut ecs.entities(), &mut ecs.write_storage::<SimpleMarker<SerializeMe>>(), &mut ecs.write_resource::<SimpleMarkerAllocator<SerializeMe>>());
         deserialize_individually!(
-            ecs, deserializer, data, SerializableResources, SerializableDeck, Position, Renderable, Viewshed,
-            BlocksTile, Name, CombatStats, Player, Monster, Creature, SufferDamage,
+            ecs, deserializer, data, SerializableResources, SerializableDeck, Position, Renderable, Name,
+            creature::Player, creature::Monster, creature::BlocksTile, creature::Viewshed, creature::SufferDamage,
             item::Item, item::Card, item::Potion, item::Ethereal, item::InBackpack, item::Targeted, item::SelfTargeted, item::AreaOfEffect,
             effects::DealDamage, effects::GainBlock, effects::DiscardCard, effects::DrawCard, effects::GainCard,
             intent::PerformAction, intent::PickupItem, intent::MeleeTarget,
@@ -140,7 +139,7 @@ pub fn load_game(ecs: &mut World) {
         let entities = ecs.entities();
         let resource_helper = ecs.read_storage::<SerializableResources>();
         let deck_helper = ecs.read_storage::<SerializableDeck>();
-        let player = ecs.read_storage::<Player>();
+        let player = ecs.read_storage::<creature::Player>();
         let position = ecs.read_storage::<Position>();
 
         // Load resources

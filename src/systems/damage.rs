@@ -1,13 +1,13 @@
 use specs::prelude::*;
-use super::super::{gamelog::GameLog, CombatStats, SufferDamage, Name};
+use super::super::{gamelog::GameLog, creature, Name};
 
 pub struct DamageSystem {}
 pub struct DeadCleanupSystem {}
 
 impl<'a> System<'a> for DamageSystem {
     type SystemData = (
-        WriteStorage<'a, CombatStats>,
-        WriteStorage<'a, SufferDamage>,
+        WriteStorage<'a, creature::CombatStats>,
+        WriteStorage<'a, creature::SufferDamage>,
     );
 
     fn run(&mut self, data : Self::SystemData) {
@@ -35,7 +35,7 @@ impl<'a>System<'a> for DeadCleanupSystem {
     type SystemData = (
         Entities<'a>,
         ReadStorage<'a, Name>,
-        ReadStorage<'a, CombatStats>,
+        ReadStorage<'a, creature::CombatStats>,
         WriteExpect<'a, GameLog>,
         ReadExpect<'a, Entity>,
     );

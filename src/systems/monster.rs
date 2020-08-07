@@ -1,5 +1,5 @@
 use specs::prelude::*;
-use super::super::{Name, Viewshed, gamelog::GameLog, CombatStats, Monster, Map, Position, intent, RunState, status};
+use super::super::{Name, gamelog::GameLog, Map, Position, creature, intent, RunState, status};
 
 use rltk::{Point};
 
@@ -12,21 +12,19 @@ impl<'a> System<'a> for MonsterSystem {
         ReadExpect<'a, Point>,
         ReadExpect<'a, Entity>,
         ReadStorage<'a, Name>,
+        WriteStorage<'a, Position>,
         ReadExpect<'a, RunState>,
         Entities<'a>,
-        WriteStorage<'a, Viewshed>,
-        ReadStorage<'a, Monster>,
-        WriteStorage<'a, Position>,
-        WriteStorage<'a, CombatStats>,
+        WriteStorage<'a, creature::Viewshed>,
+        ReadStorage<'a, creature::Monster>,
+        WriteStorage<'a, creature::CombatStats>,
         WriteStorage<'a, intent::MeleeTarget>,
         WriteStorage<'a, status::Poison>
     );
 
     fn run(&mut self, data : Self::SystemData) {
-        let (mut map, mut log, player_pos, player_entity,
-            names, runstate, entities, mut viewshed,
-            monster, mut position,  mut combat_stats,
-            mut intent_melee, mut status_poison) = data;
+        let (mut map, mut log, player_pos, player_entity, names, mut positions, runstate, entities,
+            mut viewshed, monster, mut combat_stats, mut intent_melee, mut status_poison) = data;
         
         // Skip if not on monsterturn
         if *runstate != RunState::MonsterTurn { return; }
@@ -52,7 +50,7 @@ impl<'a> System<'a> for MonsterSystem {
             }
         }
 
-        for (ent, mut viewshed, _monster, mut pos) in (&entities, &mut viewshed, &monster, &mut position).join() {
+        for (ent, mut viewshed, _monster, mut pos) in (&entities, &mut viewshed, &monster, &mut positions).join() {
             let distance = rltk::DistanceAlg::Pythagoras.distance2d(Point::new(pos.x, pos.y), *player_pos);
             if distance < 1.5 {
                 // Attack the player if in melee range
