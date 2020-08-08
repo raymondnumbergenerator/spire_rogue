@@ -12,7 +12,7 @@ pub enum RunState {
     PreRun,
     AwaitingInput,
     PlayerTurn,
-    EndTurn { player_turn: bool },
+    EndTurn { player_end_turn: bool },
     MonsterTurn,
     ShowInventory,
     ShowHand { selection: i32 },
@@ -171,8 +171,8 @@ impl State {
 
             // Update player position <Point> resource
             let (player_x, player_y) = map.rooms[0].center();
-            let mut ppos = self.ecs.write_resource::<Point>();
-            *ppos = Point::new(player_x, player_y);
+            let mut player_pos = self.ecs.write_resource::<Point>();
+            *player_pos = Point::new(player_x, player_y);
 
             // Update player entity with new position
             let mut positions = self.ecs.write_storage::<Position>();
@@ -245,10 +245,10 @@ impl GameState for State {
                 self.ecs.maintain();
                 newrunstate = RunState::AwaitingInput;
             }
-            RunState::EndTurn{player_turn} => {
+            RunState::EndTurn{player_end_turn} => {
                 self.run_systems();
                 self.ecs.maintain();
-                if player_turn {
+                if player_end_turn {
                     newrunstate = RunState::MonsterTurn;
                 } else {
                     newrunstate = RunState::AwaitingInput;
@@ -257,7 +257,7 @@ impl GameState for State {
             RunState::MonsterTurn => {
                 self.run_systems();
                 self.ecs.maintain();
-                newrunstate = RunState::EndTurn{ player_turn: false };
+                newrunstate = RunState::EndTurn{ player_end_turn: false };
             }
             RunState::ShowInventory => {
                 let result = gui::draw_inventory(&mut self.ecs, ctx);

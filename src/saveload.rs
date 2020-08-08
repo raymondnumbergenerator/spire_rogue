@@ -163,8 +163,8 @@ pub fn load_game(ecs: &mut World) {
 
         // Load player resources
         for (e, _, pos) in (&entities, &player, &position).join() {
-            let mut ppos = ecs.write_resource::<rltk::Point>();
-            *ppos = rltk::Point::new(pos.x, pos.y);
+            let mut player_pos = ecs.write_resource::<rltk::Point>();
+            *player_pos = rltk::Point::new(pos.x, pos.y);
             let mut player_resource = ecs.write_resource::<Entity>();
             *player_resource = e;
         }

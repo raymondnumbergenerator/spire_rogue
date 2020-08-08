@@ -1,35 +1,27 @@
 use specs::prelude::*;
-use specs::saveload::{SimpleMarker, MarkedBuilder};
-use rltk::{RGB, RandomNumberGenerator};
+use rltk::RandomNumberGenerator;
 
 use super::super::{
-    Name, Position, Renderable, saveload,
-    item, effects, status
+    Position, item, effects, status
 };
 
-fn build_card<S: ToString>(ecs: &mut World, name: S, energy_cost: i32) -> EntityBuilder {
-    ecs.create_entity()
-        .with(Name{ name: name.to_string() })
-        .with(item::Item{})
-        .with(item::Card{ energy_cost })
-        .marked::<SimpleMarker<saveload::SerializeMe>>()
-}
+use super::card::{build_card, Rarity};
 
 fn strike(ecs: &mut World) -> Entity {
-    build_card(ecs, "Strike", 1)
+    build_card(ecs, "Strike", 1, Rarity::Common)
         .with(item::Targeted{ range: 2 })
         .with(effects::DealDamage{ amount: 6 })
         .build()
 }
 
 fn defend(ecs: &mut World) -> Entity {
-    build_card(ecs, "Defend", 1)
+    build_card(ecs, "Defend", 1, Rarity::Common)
         .with(effects::GainBlock{ amount: 5 })
         .build()
 }
 
 fn neutralize(ecs: &mut World) -> Entity {
-    build_card(ecs, "Neutralize", 0)
+    build_card(ecs, "Neutralize", 0, Rarity::Common)
         .with(item::Targeted{ range: 2 })
         .with(effects::DealDamage{ amount: 3 })
         .with(status::Weak{ turns: 1 })
@@ -37,14 +29,14 @@ fn neutralize(ecs: &mut World) -> Entity {
 }
 
 fn survivor(ecs: &mut World) -> Entity {
-    build_card(ecs, "Survivor", 1)
+    build_card(ecs, "Survivor", 1, Rarity::Common)
         .with(effects::GainBlock{ amount: 8 })
         .with(effects::DiscardCard{ number: 1 })
         .build()
 }
 
 pub fn shiv(ecs: &mut World) -> Entity {
-    build_card(ecs, "Shiv", 0)
+    build_card(ecs, "Shiv", 0, Rarity::Common)
         .with(item::Targeted{ range: 2 })
         .with(effects::DealDamage{ amount: 4 })
         .with(item::Ethereal{})
@@ -52,52 +44,34 @@ pub fn shiv(ecs: &mut World) -> Entity {
 }
 
 fn acrobatics(ecs: &mut World, x: i32, y: i32) -> Entity {
-    build_card(ecs, "Acrobatics", 1)
+    build_card(ecs, "Acrobatics", 1, Rarity::Common)
         .with(effects::DrawCard{ number: 3 })
         .with(effects::DiscardCard{ number: 1 })
         .with(Position{ x, y })
-        .with(Renderable{
-            glyph: rltk::to_cp437('='),
-            fg: RGB::named(rltk::ORANGE),
-            bg: RGB::named(rltk::BLACK),
-            render_order: 2,
-        })
         .build()
 }
 
 fn backflip(ecs: &mut World, x: i32, y: i32) -> Entity {
-    build_card(ecs, "Backflip", 1)
+    build_card(ecs, "Backflip", 1, Rarity::Common)
         .with(effects::GainBlock{ amount: 5 })
         .with(effects::DrawCard{ number: 2 })
         .with(Position{ x, y })
-        .with(Renderable{
-            glyph: rltk::to_cp437('='),
-            fg: RGB::named(rltk::ORANGE),
-            bg: RGB::named(rltk::BLACK),
-            render_order: 2,
-        })
         .build()
 }
 
 fn blade_dance(ecs: &mut World, x: i32, y: i32) -> Entity {
-    build_card(ecs, "Blade Dance", 1)
+    build_card(ecs, "Blade Dance", 1, Rarity::Common)
         .with(effects::GainCard{
             card: effects::GainableCard::Shiv,
             number: 2,
             to_hand: true,
         })
         .with(Position{ x, y })
-        .with(Renderable{
-            glyph: rltk::to_cp437('='),
-            fg: RGB::named(rltk::ORANGE),
-            bg: RGB::named(rltk::BLACK),
-            render_order: 2,
-        })
         .build()
 }
 
 fn cloak_and_dagger(ecs: &mut World, x: i32, y: i32) -> Entity {
-    build_card(ecs, "Cloak And Dagger", 1)
+    build_card(ecs, "Cloak And Dagger", 1, Rarity::Common)
         .with(effects::GainBlock{ amount: 6 })
         .with(effects::GainCard{
             card: effects::GainableCard::Shiv,
@@ -105,70 +79,58 @@ fn cloak_and_dagger(ecs: &mut World, x: i32, y: i32) -> Entity {
             to_hand: true,
         })
         .with(Position{ x, y })
-        .with(Renderable{
-            glyph: rltk::to_cp437('='),
-            fg: RGB::named(rltk::ORANGE),
-            bg: RGB::named(rltk::BLACK),
-            render_order: 2,
-        })
         .build()
 }
 
 fn deadly_poison(ecs: &mut World, x: i32, y: i32) -> Entity {
-    build_card(ecs, "Deadly Poison", 1)
+    build_card(ecs, "Deadly Poison", 1, Rarity::Common)
         .with(item::Targeted{ range: 3 })
         .with(status::Poison{ turns: 5 })
         .with(Position{ x, y })
-        .with(Renderable{
-            glyph: rltk::to_cp437('='),
-            fg: RGB::named(rltk::ORANGE),
-            bg: RGB::named(rltk::BLACK),
-            render_order: 2,
-        })
         .build()
 }
 
 fn poisoned_stab(ecs: &mut World, x: i32, y: i32) -> Entity {
-    build_card(ecs, "Poisoned Stab", 1)
+    build_card(ecs, "Poisoned Stab", 1, Rarity::Common)
         .with(item::Targeted{ range: 2 })
         .with(effects::DealDamage{ amount: 6 })
         .with(status::Poison{ turns: 3 })
         .with(Position{ x, y })
-        .with(Renderable{
-            glyph: rltk::to_cp437('='),
-            fg: RGB::named(rltk::ORANGE),
-            bg: RGB::named(rltk::BLACK),
-            render_order: 2,
-        })
         .build()
 }
 
 fn quick_slash(ecs: &mut World, x: i32, y: i32) -> Entity {
-    build_card(ecs, "Quick Slash", 1)
+    build_card(ecs, "Quick Slash", 1, Rarity::Common)
         .with(item::Targeted{ range: 2 })
         .with(effects::DealDamage{ amount: 8 })
         .with(effects::DrawCard{ number: 1 })
         .with(Position{ x, y })
-        .with(Renderable{
-            glyph: rltk::to_cp437('='),
-            fg: RGB::named(rltk::ORANGE),
-            bg: RGB::named(rltk::BLACK),
-            render_order: 2,
-        })
         .build()
 }
 
 fn slice(ecs: &mut World, x: i32, y: i32) -> Entity {
-    build_card(ecs, "Slice", 0)
+    build_card(ecs, "Slice", 0, Rarity::Common)
         .with(item::Targeted{ range: 2 })
         .with(effects::DealDamage{ amount: 5 })
         .with(Position{ x, y })
-        .with(Renderable{
-            glyph: rltk::to_cp437('='),
-            fg: RGB::named(rltk::ORANGE),
-            bg: RGB::named(rltk::BLACK),
-            render_order: 2,
-        })
+        .build()
+}
+
+fn dash(ecs: &mut World, x: i32, y: i32) -> Entity {
+    build_card(ecs, "Dash", 2, Rarity::Uncommon)
+        .with(item::Targeted{ range: 2 })
+        .with(effects::DealDamage{ amount: 10 })
+        .with(effects::GainBlock{ amount: 10 })
+        .with(Position{ x, y })
+        .build()
+}
+
+fn leg_sweep(ecs: &mut World, x: i32, y: i32) -> Entity {
+    build_card(ecs, "Leg Sweep", 2, Rarity::Uncommon)
+        .with(item::Targeted{ range: 2 })
+        .with(effects::GainBlock{ amount: 10 })
+        .with(status::Weak{ turns: 2 })
+        .with(Position{ x, y })
         .build()
 }
 

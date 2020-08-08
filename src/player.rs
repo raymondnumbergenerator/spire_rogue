@@ -10,7 +10,7 @@ use std::cmp::{max, min};
 
 pub fn move_player(delta_x: i32, delta_y: i32, ecs: &mut World) -> RunState {
     let mut positions = ecs.write_storage::<Position>();
-    let mut ppos = ecs.write_resource::<Point>();
+    let mut player_pos = ecs.write_resource::<Point>();
     let mut players = ecs.write_storage::<creature::Player>();
     let mut viewsheds = ecs.write_storage::<creature::Viewshed>();
     let map = ecs.fetch::<Map>();
@@ -22,12 +22,12 @@ pub fn move_player(delta_x: i32, delta_y: i32, ecs: &mut World) -> RunState {
         if !map.blocked[destination_idx] {
             pos.x = min(map.width - 1, max(0, pos.x + delta_x));
             pos.y = min(map.height - 1, max(0, pos.y + delta_y));
-            ppos.x = pos.x;
-            ppos.y = pos.y;
+            player_pos.x = pos.x;
+            player_pos.y = pos.y;
 
             viewshed.dirty = true;
 
-            return RunState::EndTurn{ player_turn: true };
+            return RunState::EndTurn{ player_end_turn: true };
         }
     }
 
@@ -35,9 +35,9 @@ pub fn move_player(delta_x: i32, delta_y: i32, ecs: &mut World) -> RunState {
 }
 
 fn go_next_level(ecs: &mut World) -> RunState {
-    let ppos = ecs.fetch::<Point>();
+    let player_pos = ecs.fetch::<Point>();
     let map = ecs.fetch::<Map>();
-    let player_idx = map.xy_idx(ppos.x, ppos.y);
+    let player_idx = map.xy_idx(player_pos.x, player_pos.y);
 
     if map.tiles[player_idx] == map::TileType::DownStairs {
         return RunState::NextLevel;
@@ -130,5 +130,5 @@ pub fn player_input(ecs: &mut World, ctx: &mut Rltk) -> RunState {
         }
     }
 
-    RunState::EndTurn{ player_turn: true }
+    RunState::EndTurn{ player_end_turn: true }
 }

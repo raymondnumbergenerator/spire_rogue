@@ -15,9 +15,9 @@ impl<'a> System<'a> for VisibilitySystem {
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, mut map, pos, player, mut viewshed) = data;
+        let (entities, mut map, positions, player, mut viewsheds) = data;
 
-        for (ent, viewshed, pos) in (&entities, &mut viewshed, &pos).join() {
+        for (ent, viewshed, pos) in (&entities, &mut viewsheds, &positions).join() {
             if viewshed.dirty {
                 viewshed.dirty = false;
                 viewshed.visible_tiles.clear();

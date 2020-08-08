@@ -1,2 +1,3 @@
-pub mod ironclad;
 pub mod silent;
+
+mod card;

@@ -125,7 +125,7 @@ fn main() -> rltk::BError {
     }
     gs.ecs.insert(deck);
 
-    // Create gain queue and register <deck::ToGain> resource
+    // Create gain queue and register <effects::GainCardQueue> resource
     let gain_queue = effects::GainCardQueue{
         to_hand: Vec::new(),
         to_discard: Vec::new()

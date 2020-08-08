@@ -20,9 +20,9 @@ impl<'a> System<'a> for EndTurnSystem {
         let (entities, player_entity, runstate, mut log, names, monsters, mut combat_stats, mut status_weak, mut status_vulnerable) = data;
 
         // Skip if not on endturn
-        let turn: bool;
+        let player_turn: bool;
         match *runstate {
-            RunState::EndTurn{player_turn} => { turn = player_turn; }
+            RunState::EndTurn{player_end_turn} => { player_turn = player_end_turn; }
             _ => { return; }
         }
 
@@ -30,7 +30,7 @@ impl<'a> System<'a> for EndTurnSystem {
         {
             let mut to_remove = Vec::new();
             for (ent, mut weak) in (&entities, &mut status_weak).join() {
-                if turn {
+                if player_turn {
                     if ent == *player_entity { weak.turns -= 1; }
                 } else {
                     if let Some(_) = monsters.get(ent) {
@@ -53,7 +53,7 @@ impl<'a> System<'a> for EndTurnSystem {
         {
             let mut to_remove = Vec::new();
             for (ent, mut vulnerable) in (&entities, &mut status_vulnerable).join() {
-                if turn {
+                if player_turn {
                     if ent == *player_entity { vulnerable.turns -= 1; }
                 } else {
                     if let Some(_) = monsters.get(ent) {
@@ -74,7 +74,7 @@ impl<'a> System<'a> for EndTurnSystem {
 
         // Decay all block
         for (ent, mut stats) in (&entities, &mut combat_stats).join() {
-            if turn {
+            if player_turn {
                 if !(ent == *player_entity) { stats.block = 0; }
             } else {
                 if ent == *player_entity { stats.block = 0; }
