@@ -1,12 +1,12 @@
 use specs::prelude::*;
-use super::super::{intent, Name, creature, status, GameLog};
+use super::super::{intent, Name, creature, status, Gamelog};
 
 pub struct MeleeCombatSystem {}
 
 impl<'a> System<'a> for MeleeCombatSystem {
     type SystemData = (
         Entities<'a>,
-        WriteExpect<'a, GameLog>,
+        WriteExpect<'a, Gamelog>,
         ReadStorage<'a, Name>,
         WriteStorage<'a, intent::MeleeTarget>,
         ReadStorage<'a, creature::CombatStats>,

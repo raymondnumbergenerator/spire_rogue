@@ -1,8 +1,8 @@
-pub struct GameLog {
+pub struct Gamelog {
     pub entries: Vec<String>
 }
 
-impl GameLog {
+impl Gamelog {
     pub fn push(&mut self, msg: String) {
         self.entries.push(msg);
     }

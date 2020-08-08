@@ -5,7 +5,7 @@ use std::char;
 
 use super::{
     Map, Name, Position, Point, creature,
-    deck::Deck, util::utils, GameLog, item, status,
+    deck::Deck, util::utils, Gamelog, item, status,
     map::MAPWIDTH, map::MAPHEIGHT, WINDOWHEIGHT, deck::MAX_HAND_SIZE
 };
 
@@ -180,7 +180,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
     }
 
     // Draw message log
-    let log = ecs.fetch::<GameLog>();
+    let log = ecs.fetch::<Gamelog>();
     let mut y = MAPHEIGHT + 1;
     for s in log.entries.iter().rev(){
         if y < WINDOWHEIGHT - 1 { ctx.print(2, y, s); }

@@ -1,6 +1,6 @@
 use specs::prelude::*;
 use super::super::{
-    Name, creature, GameLog,
+    Name, creature, Gamelog,
     intent, item, deck, Map,
     effects, status
 };
@@ -11,7 +11,7 @@ impl<'a> System<'a> for ActionSystem {
     type SystemData = (
         Entities<'a>,
         ReadExpect<'a, Entity>,
-        WriteExpect<'a, GameLog>,
+        WriteExpect<'a, Gamelog>,
         ReadExpect<'a, Map>,
         ReadStorage<'a, Name>,
         WriteStorage<'a, creature::Player>,

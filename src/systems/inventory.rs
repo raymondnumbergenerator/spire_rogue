@@ -1,6 +1,6 @@
 use specs::prelude::*;
 use super::super::{
-    Position, Name, GameLog,
+    Position, Name, Gamelog,
     item, intent, deck::Deck,
 };
 
@@ -9,7 +9,7 @@ pub struct InventorySystem {}
 impl<'a> System<'a> for InventorySystem {
     type SystemData = (
         WriteExpect<'a, Deck>,
-        WriteExpect<'a, GameLog>,
+        WriteExpect<'a, Gamelog>,
         ReadStorage<'a, Name>,
         WriteStorage<'a, Position>,
         WriteStorage<'a, intent::PickupItem>,

@@ -1,5 +1,5 @@
 use specs::prelude::*;
-use super::super::{GameLog, creature, Name};
+use super::super::{Gamelog, creature, Name};
 
 pub struct DamageSystem {}
 pub struct DeadCleanupSystem {}
@@ -35,7 +35,7 @@ impl<'a>System<'a> for DeadCleanupSystem {
     type SystemData = (
         Entities<'a>,
         ReadExpect<'a, Entity>,
-        WriteExpect<'a, GameLog>,
+        WriteExpect<'a, Gamelog>,
         ReadStorage<'a, Name>,
         ReadStorage<'a, creature::CombatStats>,
     );

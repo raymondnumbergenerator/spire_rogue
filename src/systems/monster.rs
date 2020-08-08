@@ -1,5 +1,5 @@
 use specs::prelude::*;
-use super::super::{Name, GameLog, Map, Position, creature, intent, RunState, status};
+use super::super::{Name, Gamelog, Map, Position, creature, intent, RunState, status};
 
 use rltk::{Point};
 
@@ -11,7 +11,7 @@ impl<'a> System<'a> for MonsterSystem {
         ReadExpect<'a, Entity>,
         ReadExpect<'a, Point>,
         ReadExpect<'a, RunState>,
-        WriteExpect<'a, GameLog>,
+        WriteExpect<'a, Gamelog>,
         WriteExpect<'a, Map>,
         ReadStorage<'a, Name>,
         WriteStorage<'a, Position>,
