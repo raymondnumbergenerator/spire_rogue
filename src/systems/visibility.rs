@@ -25,8 +25,7 @@ impl<'a> System<'a> for VisibilitySystem {
                 viewshed.visible_tiles.retain(|p| p.x >= 0 && p.x < map.width && p.y >= 0 && p.y < map.height );
 
                 // If the entity is a Player, reveal and mark tiles visible
-                let _p: Option<&creature::Player> = player.get(ent);
-                if let Some(_p) = _p {
+                if let Some(_) = player.get(ent) {
                     for t in map.visible_tiles.iter_mut() { *t = false };
                     for vis in viewshed.visible_tiles.iter() {
                         let idx = map.xy_idx(vis.x, vis.y);

@@ -45,7 +45,8 @@ pub enum RunState {
     ShowTargeting { range: i32, radius: i32, item: Entity },
     DiscardCard { number: i32 },
     MainMenu { menu_selection: menu::MainMenuSelection },
-    SaveGame
+    SaveGame,
+    NextLevel,
 }
 
 pub struct State {
@@ -102,6 +103,87 @@ impl State {
         self.ecs.maintain();
         let mut map_sys = systems::MapIndexSystem{};
         map_sys.run_now(&self.ecs);
+    }
+
+    fn to_cleanup(&mut self) -> Vec<Entity> {
+        let entities = self.ecs.entities();
+        let player_entity = self.ecs.fetch::<Entity>();
+        let deck = self.ecs.fetch::<deck::Deck>();
+        let player = self.ecs.read_storage::<creature::Player>();
+        let backpack = self.ecs.read_storage::<item::InBackpack>();
+
+        let mut to_delete: Vec<Entity> = Vec::new();
+        for entity in entities.join() {
+            let mut should_delete = true;
+
+            // Don't delete player
+            if let Some(_) = player.get(entity) {
+                should_delete = false;
+            }
+
+            // Don't delete player's inventory
+            if let Some(e) = backpack.get(entity) {
+                if e.owner == *player_entity {
+                    should_delete = false;
+                }
+            }
+
+            // Don't delete cards in player's deck
+            if deck.hand.contains(&entity) || deck.draw.contains(&entity) || deck.discard.contains(&entity) {
+                should_delete = false;
+            }
+
+            if should_delete {
+                to_delete.push(entity);
+            }
+        }
+
+        to_delete
+    }
+
+    fn next_level(&mut self) {
+        // Cleanup entities
+        let to_delete = self.to_cleanup();
+        for entity in to_delete {
+            self.ecs.delete_entity(entity).expect("Unable to delete entity");
+        }
+
+        // Build a new map
+        let map: Map;
+        {
+            // Create map and update <Map> resource
+            let mut map_resource = self.ecs.write_resource::<Map>();
+            let current_depth = map_resource.depth;
+            *map_resource = Map::new_map_rooms_and_corridors(current_depth + 1);
+            map = map_resource.clone();
+
+            // Update player position <Point> resource
+            let (player_x, player_y) = map.rooms[0].center();
+            let mut ppos = self.ecs.write_resource::<Point>();
+            *ppos = Point::new(player_x, player_y);
+
+            // Update player entity with new position
+            let mut positions = self.ecs.write_storage::<Position>();
+            let player_entity = self.ecs.fetch::<Entity>();
+            if let Some(pos) = positions.get_mut(*player_entity) {
+                pos.x = player_x;
+                pos.y = player_y;
+            }
+
+            // Mark player's viewshed as dirty
+            let mut viewsheds = self.ecs.write_storage::<creature::Viewshed>();
+            if let Some(vs) = viewsheds.get_mut(*player_entity) {
+                vs.dirty = true;
+            }
+        }
+
+        // Spawn mobs
+        for room in map.rooms.iter().skip(1) {
+            spawner::spawn_room(&mut self.ecs, room);
+        }
+
+        let mut log = self.ecs.fetch_mut::<GameLog>();
+        log.push("You descend to the next level.".to_string());
     }
 }
 
@@ -260,8 +342,13 @@ impl GameState for State {
                     let result = gui::discard_card(&mut self.ecs, ctx, number);
                     match result.0 {
                         gui::ItemMenuResult::Selected => {
+                            let ethereal = self.ecs.read_storage::<item::Ethereal>();
                             let mut deck = self.ecs.write_resource::<deck::Deck>();
-                            deck.discard_card(result.1.unwrap(), false);
+                            if let Some(_) = ethereal.get(result.1.unwrap()) {
+                                deck.discard_card(result.1.unwrap(), true);
+                            } else {
+                                deck.discard_card(result.1.unwrap(), false);
+                            }
                             newrunstate = RunState::DiscardCard{ number: number - 1 };
                         }
                         _ => {}
@@ -288,6 +375,10 @@ impl GameState for State {
                 saveload::save_game(&mut self.ecs);
                 newrunstate = RunState::MainMenu{ menu_selection : menu::MainMenuSelection::LoadGame };
             }
+            RunState::NextLevel => {
+                self.next_level();
+                newrunstate = RunState::PreRun;
+            }
         }
 
         {
@@ -307,6 +398,15 @@ fn main() -> rltk::BError {
     // Create gamestate and register <RunState> resource
     let mut gs = State{ ecs: World::new() };
     gs.ecs.insert(RunState::MainMenu{ menu_selection: menu::MainMenuSelection::NewGame });
+
+    // Register rng <rltk::RandomNumberGenerator> resource
+    gs.ecs.insert(rltk::RandomNumberGenerator::new());
+
+    // Register <GameLog> resource
+    gs.ecs.insert(GameLog{ entries: Vec::new() });
+
+    // Register serialize marker resource
+    gs.ecs.insert(SimpleMarkerAllocator::<saveload::SerializeMe>::new());
 
     // Register components
     gs.ecs.register::<Position>();
@@ -348,17 +448,8 @@ fn main() -> rltk::BError {
     gs.ecs.register::<status::Vulnerable>();
     gs.ecs.register::<status::Poison>();
 
-    // Register <GameLog> resource
-    gs.ecs.insert(GameLog{ entries: Vec::new() });
-
-    // Register rng <rltk::RandomNumberGenerator> resource
-    gs.ecs.insert(rltk::RandomNumberGenerator::new());
-
-    // Register serialize marker resource
-    gs.ecs.insert(SimpleMarkerAllocator::<saveload::SerializeMe>::new());
-
     // Create map, mark player spawn position
-    let map = Map::new_map_rooms_and_corridors();
+    let map = Map::new_map_rooms_and_corridors(1);
     let (player_x, player_y) = map.rooms[0].center();
 
     // Register player position <Point> resource
@@ -368,17 +459,22 @@ fn main() -> rltk::BError {
     let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
     gs.ecs.insert(player_entity);
 
+    // Spawn mobs
+    for room in map.rooms.iter().skip(1) {
+        spawner::spawn_room(&mut gs.ecs, room);
+    }
+
     // Create deck and register <deck::Deck> resource
-    let mut initial_deck = deck::Deck{
+    let mut deck = deck::Deck{
         hand: Vec::new(),
         draw: Vec::new(),
         discard: Vec::new(),
     };
-    initial_deck.gain_multiple_cards(cards::silent::starter(&mut gs.ecs));
+    deck.gain_multiple_cards(cards::silent::starter(&mut gs.ecs));
     for _ in 0 .. 5 {
-        initial_deck.draw_card();
+        deck.draw_card();
     }
-    gs.ecs.insert(initial_deck);
+    gs.ecs.insert(deck);
 
     // Create gain queue and register <deck::ToGain> resource
     let gain_queue = effects::GainCardQueue{
@@ -387,12 +483,7 @@ fn main() -> rltk::BError {
     };
     gs.ecs.insert(gain_queue);
 
-    // Spawn mobs
-    for room in map.rooms.iter().skip(1) {
-        spawner::spawn_room(&mut gs.ecs, room);
-    }
-
-    // Register map resource
+    // Register <Map> resource
     gs.ecs.insert(map);
 
     rltk::main_loop(context, gs)

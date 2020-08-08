@@ -44,16 +44,16 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
     }
 
     // Push combat stats to tooltips
-    for (position, _, combat_stat) in (&positions, &creatures, &combat_stats).join() {
+    for (position, _, stats) in (&positions, &creatures, &combat_stats).join() {
         let idx = map.xy_idx(position.x, position.y);
         if position.x == mouse_pos.0 && position.y == mouse_pos.1 && map.visible_tiles[idx] {
-            tooltip.push(format!("{}/{}", combat_stat.hp, combat_stat.max_hp));
-            tooltip.push(format!("[{}]", combat_stat.block));
+            tooltip.push(format!("{}/{}", stats.hp, stats.max_hp));
+            tooltip.push(format!("[{}]", stats.block));
         }
     }
 
     // Push status effects to tooltips
-    for (position, _, weak, vulnerable, poison) in (&positions, &creatures, status_weak.maybe(),status_vulnerable.maybe(), status_poison.maybe()).join() {
+    for (position, _, weak, vulnerable, poison) in (&positions, &creatures, status_weak.maybe(), status_vulnerable.maybe(), status_poison.maybe()).join() {
         let idx = map.xy_idx(position.x, position.y);
         if position.x == mouse_pos.0 && position.y == mouse_pos.1 && map.visible_tiles[idx] {
             if let Some(w) = weak { tooltip.push(format!("W{}", w.turns)); }
@@ -170,7 +170,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
     // Draw player stats
     let combat_stats = ecs.read_storage::<creature::CombatStats>();
     let players = ecs.read_storage::<creature::Player>();
-    for (_player, stats) in (&players, &combat_stats).join() {
+    for (_, stats) in (&players, &combat_stats).join() {
         let health = format!("HP: {} / {}", stats.hp, stats.max_hp);
         let block = format!("[{}]", stats.block);
         let mut x = 2;
@@ -273,7 +273,7 @@ pub fn draw_inventory(ecs: &mut World, ctx: &mut Rltk) -> (ItemMenuResult, Optio
 
     let mut equippable: Vec<Entity> = Vec::new();
     let mut c = 0;
-    for (entity, _pack, name) in (&entities, &backpack, &names).join().filter(|item| item.1.owner == *player_entity ) {
+    for (entity, _, name) in (&entities, &backpack, &names).join().filter(|item| item.1.owner == *player_entity ) {
         ctx.set(INVENTORYPOS + 2, y, RGB::named(rltk::WHITE), RGB::named(rltk::BLACK), rltk::to_cp437('('));
         ctx.set(INVENTORYPOS + 3, y, RGB::named(rltk::YELLOW), RGB::named(rltk::BLACK), 97 + c as rltk::FontCharType);
         ctx.set(INVENTORYPOS + 4, y, RGB::named(rltk::WHITE), RGB::named(rltk::BLACK), rltk::to_cp437(')'));

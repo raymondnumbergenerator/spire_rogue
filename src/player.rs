@@ -1,6 +1,6 @@
 use specs::prelude::*;
 use super::{
-    Position, State, Map, RunState,
+    Position, map, Map, RunState,
     creature, item, intent,
     deck::Deck
 };
@@ -15,7 +15,7 @@ pub fn move_player(delta_x: i32, delta_y: i32, ecs: &mut World) -> RunState {
     let mut viewsheds = ecs.write_storage::<creature::Viewshed>();
     let map = ecs.fetch::<Map>();
 
-    for (_player, pos, viewshed) in (&mut players, &mut positions, &mut viewsheds).join() {
+    for (_, pos, viewshed) in (&mut players, &mut positions, &mut viewsheds).join() {
         let destination_idx = map.xy_idx(pos.x + delta_x, pos.y + delta_y);
 
         // Move to the tile if it is not blocked and end player turn
@@ -31,6 +31,17 @@ pub fn move_player(delta_x: i32, delta_y: i32, ecs: &mut World) -> RunState {
         }
     }
 
+    RunState::AwaitingInput
+}
+
+fn go_next_level(ecs: &mut World) -> RunState {
+    let ppos = ecs.fetch::<Point>();
+    let map = ecs.fetch::<Map>();
+    let player_idx = map.xy_idx(ppos.x, ppos.y);
+
+    if map.tiles[player_idx] == map::TileType::DownStairs {
+        return RunState::NextLevel;
+    }
     RunState::AwaitingInput
 }
 
@@ -100,6 +111,7 @@ pub fn player_input(ecs: &mut World, ctx: &mut Rltk) -> RunState {
             VirtualKeyCode::E => return move_player(1, -1, ecs),
             VirtualKeyCode::Z => return move_player(-1, 1, ecs),
             VirtualKeyCode::C => return move_player(1, 1, ecs),
+            VirtualKeyCode::Period => return go_next_level(ecs),
             VirtualKeyCode::P => return RunState::ShowInventory,
             VirtualKeyCode::Key1 => return RunState::ShowHand{ selection: 0 },
             VirtualKeyCode::Key2 => return RunState::ShowHand{ selection: 1 },

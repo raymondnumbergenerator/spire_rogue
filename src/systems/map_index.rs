@@ -20,8 +20,7 @@ impl<'a> System<'a> for MapIndexSystem {
             let idx = map.xy_idx(position.x, position.y);
 
             // If entity is a Blocker, update the blocked list
-            let _p: Option<&BlocksTile> = blockers.get(ent);
-            if let Some(_p) = _p {
+            if let Some(_) = blockers.get(ent) {
                 map.blocked[idx] = true;
             }
 

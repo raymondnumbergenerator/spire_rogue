@@ -130,7 +130,7 @@ fn deadly_poison(ecs: &mut World, x: i32, y: i32) -> Entity {
 
 fn poisoned_stab(ecs: &mut World, x: i32, y: i32) -> Entity {
     build_card(ecs, "Poisoned Stab", 1)
-        .with(item::Targeted{ range: 3 })
+        .with(item::Targeted{ range: 2 })
         .with(effects::DealDamage{ amount: 6 })
         .with(status::Poison{ turns: 3 })
         .with(Position{ x, y })

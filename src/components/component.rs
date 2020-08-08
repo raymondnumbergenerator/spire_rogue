@@ -3,6 +3,7 @@ use specs::saveload::{Marker, ConvertSaveload};
 use specs::error::NoError;
 use specs_derive::{Component, ConvertSaveload};
 use serde::{Serialize, Deserialize};
+
 use rltk::{RGB};
 
 #[derive(Component, Debug, ConvertSaveload, Clone)]

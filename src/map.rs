@@ -13,6 +13,7 @@ pub const MAPSIZE: usize = MAPHEIGHT * MAPWIDTH;
 pub enum TileType {
     Wall,
     Floor,
+    DownStairs
 }
 
 #[derive(Default, Serialize, Deserialize, Clone)]
@@ -24,13 +25,14 @@ pub struct Map {
     pub revealed_tiles: Vec<bool>,
     pub visible_tiles: Vec<bool>,
     pub blocked: Vec<bool>,
+    pub depth: i32,
 
     #[serde(skip_serializing)]
     #[serde(skip_deserializing)]
     pub tile_content: Vec<Vec<Entity>>,
 }
 
-fn build_map(width: i32, height: i32, default_tile: TileType) -> Map {
+fn build_map(width: i32, height: i32, default_tile: TileType, map_depth: i32) -> Map {
     let size = (width * height) as usize;
     Map{
         tiles: vec![default_tile; size],
@@ -41,6 +43,7 @@ fn build_map(width: i32, height: i32, default_tile: TileType) -> Map {
         visible_tiles: vec![false; size],
         blocked: vec![false; size],
         tile_content: vec![Vec::new(); size],
+        depth: map_depth,
     }
 }
 
@@ -88,8 +91,8 @@ impl Map {
         }
     }
 
-    pub fn new_map_rooms_and_corridors() -> Map {
-        let mut map = build_map(MAPWIDTH as i32, MAPHEIGHT as i32, TileType::Wall);
+    pub fn new_map_rooms_and_corridors(map_depth: i32) -> Map {
+        let mut map = build_map(MAPWIDTH as i32, MAPHEIGHT as i32, TileType::Wall, map_depth);
         
         const MAX_ROOMS: i32 = 30;
         const MIN_SIZE: i32 = 6;
@@ -125,12 +128,17 @@ impl Map {
                 map.rooms.push(new_room);
             }
         }
+
+        // Place down stairs in the last room
+        let stairs_position = map.rooms[map.rooms.len() - 1].center();
+        let stairs_idx = map.xy_idx(stairs_position.0, stairs_position.1);
+        map.tiles[stairs_idx] = TileType::DownStairs;
     
         map
     }
 
-    pub fn new_map_field() -> Map {
-        let mut map = build_map(MAPWIDTH as i32, MAPHEIGHT as i32, TileType::Floor);
+    pub fn new_map_field(map_depth: i32) -> Map {
+        let mut map = build_map(MAPWIDTH as i32, MAPHEIGHT as i32, TileType::Floor, map_depth);
 
         let room = Rect::new(0, 0, map.width, map.height);
         map.rooms.push(room);
@@ -226,6 +234,10 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
                 TileType::Wall => {
                     glyph = rltk::to_cp437('#');
                     fg = RGB::from_f32(0.4, 0.4, 0.0);
+                }
+                TileType::DownStairs => {
+                    glyph = rltk::to_cp437('>');
+                    fg = RGB::from_f32(0.0, 1.0, 1.0);
                 }
             }
             if !map.visible_tiles[idx] { fg = fg.to_greyscale() }
