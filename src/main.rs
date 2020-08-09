@@ -10,7 +10,6 @@ mod components;
 use components::component::{Name, Position, Renderable};
 use components::creature;
 use components::effects;
-use components::intent;
 use components::item;
 use components::status;
 
@@ -25,6 +24,7 @@ mod player;
 
 mod cards;
 mod deck;
+mod monsters;
 mod spawner;
 
 mod saveload;
@@ -69,6 +69,11 @@ fn main() -> rltk::BError {
     gs.ecs.register::<creature::BlocksTile>();
     gs.ecs.register::<creature::Viewshed>();
     gs.ecs.register::<creature::SufferDamage>();
+    gs.ecs.register::<creature::PerformAction>();
+    gs.ecs.register::<creature::PickupItem>();
+    gs.ecs.register::<creature::Attack>();
+    gs.ecs.register::<creature::Intent>();
+    gs.ecs.register::<creature::AttackCycle>();
 
     gs.ecs.register::<SimpleMarker<saveload::SerializeMe>>();
     gs.ecs.register::<saveload::SerializableResources>();
@@ -88,10 +93,6 @@ fn main() -> rltk::BError {
     gs.ecs.register::<item::Targeted>();
     gs.ecs.register::<item::SelfTargeted>();
     gs.ecs.register::<item::AreaOfEffect>();
-
-    gs.ecs.register::<intent::PerformAction>();
-    gs.ecs.register::<intent::PickupItem>();
-    gs.ecs.register::<intent::MeleeTarget>();
 
     gs.ecs.register::<status::Weak>();
     gs.ecs.register::<status::Vulnerable>();

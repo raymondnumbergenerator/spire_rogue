@@ -4,6 +4,8 @@ use specs::error::NoError;
 use specs_derive::{Component, ConvertSaveload};
 use serde::{Serialize, Deserialize};
 
+use super::super::{monsters};
+
 #[derive(Component, Debug, Serialize, Deserialize, Clone)]
 pub struct Creature {}
 
@@ -49,4 +51,31 @@ impl SufferDamage {
             store.insert(victim, dmg).expect("Unable to insert damage");
         }
     }
+}
+
+#[derive(Component, Debug, ConvertSaveload)]
+pub struct PerformAction {
+    pub action: Entity,
+    pub target: Option<rltk::Point>,
+}
+
+#[derive(Component, Debug, ConvertSaveload)]
+pub struct PickupItem {
+    pub collected_by: Entity,
+    pub item: Entity,
+}
+
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct Attack{}
+
+#[derive(Component, ConvertSaveload, Clone)]
+pub struct Intent {
+    pub intent: Entity,
+    pub used: bool,
+}
+
+#[derive(Component, ConvertSaveload, Clone)]
+pub struct AttackCycle {
+    pub attacks: Vec<monsters::Attacks>,
+    pub cycle: usize,
 }

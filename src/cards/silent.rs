@@ -9,7 +9,7 @@ use super::card::{build_card, Rarity};
 
 fn strike(ecs: &mut World) -> Entity {
     build_card(ecs, "Strike", 1, Rarity::Common)
-        .with(item::Targeted{ range: 2 })
+        .with(item::Targeted{ range: 1 })
         .with(effects::DealDamage{ amount: 6 })
         .build()
 }
@@ -22,7 +22,7 @@ fn defend(ecs: &mut World) -> Entity {
 
 fn neutralize(ecs: &mut World) -> Entity {
     build_card(ecs, "Neutralize", 0, Rarity::Common)
-        .with(item::Targeted{ range: 2 })
+        .with(item::Targeted{ range: 1 })
         .with(effects::DealDamage{ amount: 3 })
         .with(status::Weak{ turns: 1 })
         .build()
@@ -37,7 +37,7 @@ fn survivor(ecs: &mut World) -> Entity {
 
 pub fn shiv(ecs: &mut World) -> Entity {
     build_card(ecs, "Shiv", 0, Rarity::Common)
-        .with(item::Targeted{ range: 2 })
+        .with(item::Targeted{ range: 1 })
         .with(effects::DealDamage{ amount: 4 })
         .with(item::Ethereal{})
         .build()
@@ -84,7 +84,7 @@ fn cloak_and_dagger(ecs: &mut World, x: i32, y: i32) -> Entity {
 
 fn deadly_poison(ecs: &mut World, x: i32, y: i32) -> Entity {
     build_card(ecs, "Deadly Poison", 1, Rarity::Common)
-        .with(item::Targeted{ range: 3 })
+        .with(item::Targeted{ range: 2 })
         .with(status::Poison{ turns: 5 })
         .with(Position{ x, y })
         .build()
@@ -92,7 +92,7 @@ fn deadly_poison(ecs: &mut World, x: i32, y: i32) -> Entity {
 
 fn poisoned_stab(ecs: &mut World, x: i32, y: i32) -> Entity {
     build_card(ecs, "Poisoned Stab", 1, Rarity::Common)
-        .with(item::Targeted{ range: 2 })
+        .with(item::Targeted{ range: 1 })
         .with(effects::DealDamage{ amount: 6 })
         .with(status::Poison{ turns: 3 })
         .with(Position{ x, y })
@@ -101,7 +101,7 @@ fn poisoned_stab(ecs: &mut World, x: i32, y: i32) -> Entity {
 
 fn quick_slash(ecs: &mut World, x: i32, y: i32) -> Entity {
     build_card(ecs, "Quick Slash", 1, Rarity::Common)
-        .with(item::Targeted{ range: 2 })
+        .with(item::Targeted{ range: 1 })
         .with(effects::DealDamage{ amount: 8 })
         .with(effects::DrawCard{ number: 1 })
         .with(Position{ x, y })
@@ -110,7 +110,7 @@ fn quick_slash(ecs: &mut World, x: i32, y: i32) -> Entity {
 
 fn slice(ecs: &mut World, x: i32, y: i32) -> Entity {
     build_card(ecs, "Slice", 0, Rarity::Common)
-        .with(item::Targeted{ range: 2 })
+        .with(item::Targeted{ range: 1 })
         .with(effects::DealDamage{ amount: 5 })
         .with(Position{ x, y })
         .build()
@@ -118,7 +118,7 @@ fn slice(ecs: &mut World, x: i32, y: i32) -> Entity {
 
 fn dash(ecs: &mut World, x: i32, y: i32) -> Entity {
     build_card(ecs, "Dash", 2, Rarity::Uncommon)
-        .with(item::Targeted{ range: 2 })
+        .with(item::Targeted{ range: 1 })
         .with(effects::DealDamage{ amount: 10 })
         .with(effects::GainBlock{ amount: 10 })
         .with(Position{ x, y })
@@ -127,7 +127,7 @@ fn dash(ecs: &mut World, x: i32, y: i32) -> Entity {
 
 fn leg_sweep(ecs: &mut World, x: i32, y: i32) -> Entity {
     build_card(ecs, "Leg Sweep", 2, Rarity::Uncommon)
-        .with(item::Targeted{ range: 2 })
+        .with(item::Targeted{ range: 1 })
         .with(effects::GainBlock{ amount: 10 })
         .with(status::Weak{ turns: 2 })
         .with(Position{ x, y })
@@ -138,7 +138,7 @@ pub fn random_card(ecs: &mut World, x: i32, y: i32) {
     let roll: i32;
     {
         let mut rng = ecs.write_resource::<RandomNumberGenerator>();
-        roll = rng.roll_dice(1, 8);
+        roll = rng.roll_dice(1, 10);
     }
 
     match roll {
@@ -149,7 +149,9 @@ pub fn random_card(ecs: &mut World, x: i32, y: i32) {
         5 => { deadly_poison(ecs, x, y); }
         6 => { poisoned_stab(ecs, x, y); }
         7 => { quick_slash(ecs, x, y); }
-        _ => { slice(ecs, x, y); }
+        8 => { slice(ecs, x, y); }
+        9 => { dash(ecs, x, y); }
+        _ => { leg_sweep(ecs, x, y); }
     }
 }
 

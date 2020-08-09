@@ -1,5 +1,5 @@
 use specs::prelude::*;
-use super::super::{Name, Gamelog, Map, Position, creature, intent, RunState, status};
+use super::super::{Name, Gamelog, Map, Position, creature, item, RunState, status};
 
 use rltk::{Point};
 
@@ -8,23 +8,26 @@ pub struct MonsterSystem {}
 impl<'a> System<'a> for MonsterSystem {
     type SystemData = (
         Entities<'a>,
-        ReadExpect<'a, Entity>,
         ReadExpect<'a, Point>,
         ReadExpect<'a, RunState>,
         WriteExpect<'a, Gamelog>,
         WriteExpect<'a, Map>,
         ReadStorage<'a, Name>,
         WriteStorage<'a, Position>,
+        ReadStorage<'a, item::Targeted>,
         WriteStorage<'a, creature::Viewshed>,
         ReadStorage<'a, creature::Monster>,
         WriteStorage<'a, creature::CombatStats>,
-        WriteStorage<'a, intent::MeleeTarget>,
+        WriteStorage<'a, creature::AttackCycle>,
+        WriteStorage<'a, creature::Intent>,
+        WriteStorage<'a, creature::PerformAction>,
         WriteStorage<'a, status::Poison>
     );
 
     fn run(&mut self, data : Self::SystemData) {
-        let (entities, player_entity, player_pos, runstate, mut log, mut map, names, mut positions,
-            mut viewshed, monster, mut combat_stats, mut intent_melee, mut status_poison) = data;
+        let (entities, player_pos, runstate, mut log, mut map, names, mut positions, targeted,
+            mut viewshed, monster, mut combat_stats, mut attack_cycles, mut monster_intents,
+            mut intent_action, mut status_poison) = data;
         
         // Skip if not on monsterturn
         if *runstate != RunState::MonsterTurn { return; }
@@ -50,11 +53,20 @@ impl<'a> System<'a> for MonsterSystem {
             }
         }
 
-        for (ent, mut viewshed, _monster, mut pos) in (&entities, &mut viewshed, &monster, &mut positions).join() {
+        for (ent, mut viewshed, mut pos, mut atk, mut intent, _) in (&entities, &mut viewshed, &mut positions, &mut attack_cycles, &mut monster_intents, &monster).join() {
             let distance = rltk::DistanceAlg::Pythagoras.distance2d(Point::new(pos.x, pos.y), *player_pos);
-            if distance < 1.5 {
-                // Attack the player if in melee range
-                intent_melee.insert(ent, intent::MeleeTarget{ target: *player_entity}).expect("Unable to insert attack");
+            let range = match targeted.get(intent.intent) {
+                Some(r) => { r.range }
+                None => { 1 }
+            };
+            let adjusted_range = range as f32 + { if range <= 1 { 0.5 } else { 0.0 } };
+
+            if distance < adjusted_range as f32 {
+                // Perform action if player is in range
+                intent_action.insert(ent, creature::PerformAction{ action: intent.intent, target: Some(Point::new(player_pos.x, player_pos.y)) })
+                    .expect("Unable to insert intent::PerformAction for monsters");
+                atk.cycle = (atk.cycle + 1) % atk.attacks.len();
+                intent.used = true;
             } else if viewshed.visible_tiles.contains(&*player_pos) {
                 // Move towards the player
                 let path = rltk::a_star_search(

@@ -4,8 +4,8 @@ use rltk::{RGB, Rltk, VirtualKeyCode};
 use std::char;
 
 use super::{
-    Map, Name, Position, Point, creature,
-    deck::Deck, util::utils, Gamelog, item, status,
+    Map, Name, Position, Point, Gamelog, creature,
+    deck::Deck, util::utils, monsters, item, status,
     map::MAPWIDTH, map::MAPHEIGHT, WINDOWHEIGHT, deck::MAX_HAND_SIZE
 };
 
@@ -25,15 +25,20 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
     let names = ecs.read_storage::<Name>();
     let positions = ecs.read_storage::<Position>();
     let creatures = ecs.read_storage::<creature::Creature>();
+    let monsters = ecs.read_storage::<creature::Monster>();
     let combat_stats = ecs.read_storage::<creature::CombatStats>();
     let status_weak = ecs.read_storage::<status::Weak>();
     let status_vulnerable = ecs.read_storage::<status::Vulnerable>();
     let status_poison = ecs.read_storage::<status::Poison>();
 
+    let attack_cycles = ecs.read_storage::<creature::AttackCycle>();
+
     let mouse_pos = ctx.mouse_pos();
     if mouse_pos.0 >= map.width || mouse_pos.1 >= map.height { return; }
 
     let mut tooltip: Vec<String> = Vec::new();
+
+    let mut draw_intents = false;
 
     // Push name to tooltips
     for (position, name) in (&positions, &names).join() {
@@ -49,6 +54,28 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
         if position.x == mouse_pos.0 && position.y == mouse_pos.1 && map.visible_tiles[idx] {
             tooltip.push(format!("{}/{}", stats.hp, stats.max_hp));
             tooltip.push(format!("[{}]", stats.block));
+        }
+    }
+
+    // Push enemy intent to tooltips
+    for (position, _, ac) in (&positions, &monsters, &attack_cycles).join() {
+        let idx = map.xy_idx(position.x, position.y);
+        if position.x == mouse_pos.0 && position.y == mouse_pos.1 && map.visible_tiles[idx] {
+            match ac.attacks[ac.cycle] {
+                monsters::Attacks::NormalAttack{name: _, amount, range} => {
+                    tooltip.push(format!("{}:A{}", range, amount));
+                }
+                monsters::Attacks::GainBlock{name: _, amount, range: _} => {
+                    tooltip.push(format!("B{}", amount));
+                }
+                monsters::Attacks::AttackAndBlock{name: _, damage_amount, block_amount, range} => {
+                    tooltip.push(format!("{}:A{}B{}", range, damage_amount, block_amount));
+                }
+                monsters::Attacks::ApplyWeak{name: _, turns, range} => {
+                    tooltip.push(format!("{}:W{}", range, turns));
+                }
+            }
+            draw_intents = true;
         }
     }
 
@@ -98,6 +125,13 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
         if let Some(s) = s { ctx.print_color(x + hp_len, y, RGB::named(rltk::CYAN), RGB::named(rltk::GREY), s); }
         y += 1;
 
+        // Draw enemy intents
+        if draw_intents {
+            s = tooltip_iter.next();
+            if let Some(s) = s { ctx.print_color(x, y, RGB::named(rltk::ORANGE), RGB::named(rltk::GREY), s); }
+            y += 1;
+        }
+
         // Draw entity status effects
         for s in tooltip_iter {
             let color;
@@ -120,12 +154,14 @@ pub fn ranged_target(ecs: &World, ctx: &mut Rltk, range: i32, radius: i32) -> (I
     let mouse_pos = ctx.mouse_pos();
     let mouse_point = Point::new(mouse_pos.0, mouse_pos.1);
 
+    let adjusted_range = range as f32 + { if range <= 1 { 0.5 } else { 0.0 } };
+
     // Highlight available target cells
     let mut available_cells = Vec::new();
     if let Some(visible) = viewsheds.get(*player_entity) {
         for idx in visible.visible_tiles.iter() {
             let dist = rltk::DistanceAlg::Pythagoras.distance2d(*player_pos, *idx);
-            if dist <= range as f32 {
+            if dist <= adjusted_range as f32 {
                 ctx.set_bg(idx.x, idx.y, RGB::named(rltk::YELLOW));
                 available_cells.push(idx);
             }
@@ -170,13 +206,29 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
     // Draw player stats
     let combat_stats = ecs.read_storage::<creature::CombatStats>();
     let players = ecs.read_storage::<creature::Player>();
+    let mut x = 2;
     for (_, stats) in (&players, &combat_stats).join() {
         let health = format!("HP: {} / {}", stats.hp, stats.max_hp);
         let block = format!("[{}]", stats.block);
-        let mut x = 2;
         ctx.print_color(x, MAPHEIGHT, RGB::named(rltk::RED), RGB::named(rltk::BLACK), &health);
         x += health.len() + 1;
         ctx.print_color(x, MAPHEIGHT, RGB::named(rltk::CYAN), RGB::named(rltk::BLACK), &block);
+        x += block.len() + 1;
+    }
+
+    // Draw player status effects
+    let status_weak = ecs.read_storage::<status::Weak>();
+    let status_vulnerable = ecs.read_storage::<status::Vulnerable>();
+    for (_, weak, vulnerable) in (&players, status_weak.maybe(), status_vulnerable.maybe()).join() {
+        if let Some(w) = weak {
+            let weak_text = format!("W{}", w.turns);
+            ctx.print_color(x, MAPHEIGHT, RGB::named(rltk::LIGHTBLUE), RGB::named(rltk::BLACK), &weak_text);
+            x += weak_text.len()
+        }
+        if let Some(v) = vulnerable {
+            let vulnerable_text = format!("V{}", v.turns);
+            ctx.print_color(x, MAPHEIGHT, RGB::named(rltk::RED), RGB::named(rltk::BLACK), &vulnerable_text);
+        }
     }
 
     // Draw message log
@@ -204,10 +256,14 @@ pub fn draw_hand(ecs: &World, ctx: &mut Rltk)  {
     let player_energy = players.get(*player_entity).unwrap();
 
     let mut y = MAPHEIGHT as i32;
+    // Draw gui box
     ctx.draw_box(INVENTORYPOS, y, INVENTORYWIDTH, MAX_HAND_SIZE + 3, RGB::named(rltk::WHITE), RGB::named(rltk::BLACK));
+
+    // Draw "hand" label and player energy
     ctx.print_color(INVENTORYPOS + 2, y, RGB::named(rltk::YELLOW), RGB::named(rltk::BLACK), "Hand");
     ctx.print_color(INVENTORYPOS + 8, y, RGB::named(rltk::YELLOW), RGB::named(rltk::BLACK), format!("[{} / {}]", player_energy.energy, player_energy.max_energy));
 
+    // Draw cards
     let mut hand: Vec<Entity> = Vec::new();
     let mut i = 1;
     for c in deck.hand.iter() {
@@ -232,8 +288,8 @@ pub fn pick_card(ecs: &World, selection: i32) -> (ItemMenuResult, Option<Entity>
     let players = ecs.read_storage::<creature::Player>();
     let player_energy = players.get(*player_entity).unwrap();
 
-    if selection > -1 && selection < hand.len() as i32 &&
-        cards.get(hand[selection as usize]).unwrap().energy_cost <= player_energy.energy {
+    if selection > -1 && selection < hand.len() as i32
+        && cards.get(hand[selection as usize]).unwrap().energy_cost <= player_energy.energy {
         return (ItemMenuResult::Selected, Some(hand[selection as usize]));
     }
     (ItemMenuResult::Cancel, None)

@@ -1,7 +1,7 @@
 use specs::prelude::*;
 use super::super::{
     Name, creature, Gamelog,
-    intent, item, deck, Map,
+    item, deck, Map,
     effects, status
 };
 
@@ -15,16 +15,16 @@ impl<'a> System<'a> for ActionSystem {
         ReadExpect<'a, Map>,
         ReadStorage<'a, Name>,
         WriteStorage<'a, creature::Player>,
-        ReadStorage<'a, creature::Monster>,
+        ReadStorage<'a, creature::Creature>,
         WriteStorage<'a, creature::CombatStats>,
         WriteStorage<'a, creature::SufferDamage>,
+        WriteStorage<'a, creature::PerformAction>,
         WriteExpect<'a, deck::Deck>,
         ReadStorage<'a, item::Potion>,
         ReadStorage<'a, item::Ethereal>,
         ReadStorage<'a, item::SelfTargeted>,
         ReadStorage<'a, item::AreaOfEffect>,
         ReadStorage<'a, item::Card>,
-        WriteStorage<'a, intent::PerformAction>,
         ReadStorage<'a, effects::GainBlock>,
         ReadStorage<'a, effects::DealDamage>,
         ReadStorage<'a, effects::DrawCard>,
@@ -37,8 +37,8 @@ impl<'a> System<'a> for ActionSystem {
 
     fn run(&mut self, data: Self::SystemData) {
         let (entities, player_entity, mut log, map, names,
-            mut player, monsters, mut combat_stats, mut suffer_damage,
-            mut deck, potions, ethereal, self_targeted, aoe, cards, mut intent_action,
+            mut player, creatures, mut combat_stats, mut suffer_damage,
+            mut intent_action, mut deck, potions, ethereal, self_targeted, aoe, cards,
             effect_gain_block, effect_deal_damage, effect_draw, gain_card, mut gain_card_queue,
             mut status_weak, mut status_vulnerable, mut status_poison) = data;
 
@@ -55,8 +55,10 @@ impl<'a> System<'a> for ActionSystem {
                         match area_effect {
                             None => {
                                 let idx = map.xy_idx(target.x, target.y);
-                                for mob in map.tile_content[idx].iter() {
-                                    if let Some(_) = monsters.get(*mob) { targets.push(*mob); }
+                                for creature in map.tile_content[idx].iter() {
+                                    if let Some(_) = creatures.get(*creature) {
+                                        if *creature != entity { targets.push(*creature); }
+                                    }
                                 }
                             }
                             Some(area_effect) => {
@@ -64,8 +66,10 @@ impl<'a> System<'a> for ActionSystem {
                                 aoe_tiles.retain(|p| p.x > 0 && p.x < map.width-1 && p.y > 0 && p.y < map.height-1 );
                                 for tile_idx in aoe_tiles.iter() {
                                     let idx = map.xy_idx(tile_idx.x, tile_idx.y);
-                                    for mob in map.tile_content[idx].iter() {
-                                        if let Some(_) = monsters.get(*mob) { targets.push(*mob); }
+                                    for creature in map.tile_content[idx].iter() {
+                                        if let Some(_) = creatures.get(*creature) {
+                                            if *creature != entity { targets.push(*creature); }
+                                        }
                                     }
                                 }
                             }
@@ -82,7 +86,10 @@ impl<'a> System<'a> for ActionSystem {
                     stats.block += amount;
                 }
                 if entity == *player_entity {
-                    log.push(format!("You use {} and gain {} block.", names.get(intent.action).unwrap().name, amount))
+                    log.push(format!("{} uses {} and gain {} block.",
+                        names.get(entity).unwrap().name,
+                        names.get(intent.action).unwrap().name,
+                        amount))
                 }
             }
 
@@ -92,18 +99,22 @@ impl<'a> System<'a> for ActionSystem {
                     let stats = combat_stats.get(entity).unwrap();
                     let mut dmg = i32::max(0, action.amount + stats.strength);
 
-                    // Check for status: vulnerable
+                    // Check for status::Weak
+                    if let Some(_) = status_weak.get_mut(entity) {
+                        dmg = (dmg as f32 * 0.75) as i32;
+                    }
+
+                    // Check for status::Vulnerable
                     if let Some(_) = status_vulnerable.get_mut(*target) {
                         dmg = (dmg as f32 * 1.5) as i32;
                     }
 
                     creature::SufferDamage::new_damage(&mut suffer_damage, *target, dmg);
-                    if entity == *player_entity {
-                        log.push(format!("You use {} on {} for {} damage.",
-                            names.get(intent.action).unwrap().name,
-                            names.get(*target).unwrap().name,
-                            dmg))
-                    }
+                    log.push(format!("{} uses {} on {} for {} damage.",
+                        names.get(entity).unwrap().name,
+                        names.get(intent.action).unwrap().name,
+                        names.get(*target).unwrap().name,
+                        dmg))
                 }
             }
 
@@ -113,11 +124,10 @@ impl<'a> System<'a> for ActionSystem {
                 if let Some(action) = status_weak.get(intent.action) {
                     for target in targets.iter() {
                         affected_targets.push((*target, action.turns));
-                        if entity == *player_entity {
-                            log.push(format!("You apply weak to {} for {} turns.",
-                                names.get(*target).unwrap().name,
-                                action.turns))
-                        }
+                        log.push(format!("{} applies weak to {} for {} turns.",
+                            names.get(entity).unwrap().name,
+                            names.get(*target).unwrap().name,
+                            action.turns))
                     }
                 }
                 for target in affected_targets.iter() {
@@ -135,11 +145,10 @@ impl<'a> System<'a> for ActionSystem {
                 if let Some(action) = status_vulnerable.get(intent.action) {
                     for target in targets.iter() {
                         affected_targets.push((*target, action.turns));
-                        if entity == *player_entity {
-                            log.push(format!("You apply vulnerable to {} for {} turns.",
-                                names.get(*target).unwrap().name,
-                                action.turns))
-                        }
+                        log.push(format!("{} applies vulnerable to {} for {} turns.",
+                            names.get(entity).unwrap().name,
+                            names.get(*target).unwrap().name,
+                            action.turns))
                     }
                 }
                 for target in affected_targets.iter() {
@@ -158,7 +167,8 @@ impl<'a> System<'a> for ActionSystem {
                     for target in targets.iter() {
                         affected_targets.push((*target, action.turns));
                         if entity == *player_entity {
-                            log.push(format!("You apply poison to {} for {} turns.",
+                            log.push(format!("{} applies poison to {} for {} turns.",
+                                names.get(entity).unwrap().name,
                                 names.get(*target).unwrap().name,
                                 action.turns))
                         }

@@ -3,7 +3,8 @@ use specs::saveload::{SimpleMarker, MarkedBuilder};
 use rltk::{RGB, RandomNumberGenerator};
 
 use super::super::{
-    Name, Renderable, saveload, item};
+    Name, Renderable, saveload, item
+};
 
 pub enum Rarity {
     Common,
@@ -13,9 +14,9 @@ pub enum Rarity {
 
 pub fn build_card<S: ToString>(ecs: &mut World, name: S, energy_cost: i32, rarity: Rarity) -> EntityBuilder {
     let color = match rarity {
-        Rarity::Common => RGB::named(rltk::GRAY),
-        Rarity::Uncommon => RGB::named(rltk::BLUE),
-        Rarity::Rare => RGB::named(rltk::YELLOW),
+        Rarity::Common => RGB::named(rltk::LIGHT_GRAY),
+        Rarity::Uncommon => RGB::named(rltk::LIGHT_BLUE),
+        Rarity::Rare => RGB::named(rltk::LIGHT_YELLOW),
     };
 
     ecs.create_entity()

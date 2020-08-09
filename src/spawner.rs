@@ -4,13 +4,13 @@ use rltk::{RGB, RandomNumberGenerator};
 
 use super::{
     Name, Position, Renderable, saveload,
-    creature, effects, cards, item,
+    creature, effects, cards, item, monsters,
     util::rect::Rect, map::MAPWIDTH,
 };
 
 pub fn player(ecs: &mut World, x: i32, y: i32) -> Entity {
     ecs.create_entity()
-        .with(Name{ name: "Ironclad".to_string() })
+        .with(Name{ name: "Silent".to_string() })
         .with(Position{ x, y })
         .with(Renderable{
             glyph: rltk::to_cp437('@'),
@@ -78,58 +78,6 @@ fn potion_explosive(ecs: &mut World, x: i32, y: i32) {
         .with(effects::DealDamage{ amount: 10 })
         .marked::<SimpleMarker<saveload::SerializeMe>>()
         .build();
-}
-
-fn build_monster<S: ToString>(ecs: &mut World, name: S, x: i32, y: i32, glyph: rltk::FontCharType, fg: RGB,) -> EntityBuilder {
-    ecs.create_entity()
-        .with(Name{ name: name.to_string() })
-        .with(Position{ x, y })
-        .with(Renderable{
-            glyph,
-            fg,
-            bg: RGB::named(rltk::BLACK),
-            render_order: 1
-        })
-        .with(creature::Creature{})
-        .with(creature::Monster{})
-        .with(creature::Viewshed{ visible_tiles: Vec::new(), range: 8, dirty: true})
-        .with(creature::BlocksTile{})
-        .marked::<SimpleMarker<saveload::SerializeMe>>()
-}
-
-fn monster_cultist(ecs: &mut World, x: i32, y: i32) {
-    let hp = ecs.write_resource::<RandomNumberGenerator>().range(48, 55);
-    build_monster(ecs, "Cultist", x, y, rltk::to_cp437('c'), RGB::named(rltk::RED))
-        .with(creature::CombatStats{ max_hp: hp, hp: hp, dexterity: 0, strength: 4, block: 0 })
-        .build();
-}
-
-fn monster_louse(ecs: &mut World, x: i32, y: i32) {
-    let hp = ecs.write_resource::<RandomNumberGenerator>().range(10, 16);
-    build_monster(ecs, "Louse", x, y, rltk::to_cp437('l'), RGB::named(rltk::RED))
-        .with(creature::CombatStats{ max_hp: hp, hp: hp, dexterity: 0, strength: 4, block: 0 })
-        .build();
-}
-
-fn monster_jaw_worm(ecs: &mut World, x: i32, y: i32) {
-    let hp = ecs.write_resource::<RandomNumberGenerator>().range(40, 45);
-    build_monster(ecs, "Jaw Worm", x, y, rltk::to_cp437('j'), RGB::named(rltk::RED))
-        .with(creature::CombatStats{ max_hp: hp, hp: hp, dexterity: 0, strength: 4, block: 0 })
-        .build();
-}
-
-pub fn random_monster(ecs: &mut World, x: i32, y: i32) {
-    let roll: i32;
-    {
-        let mut rng = ecs.write_resource::<RandomNumberGenerator>();
-        roll = rng.roll_dice(1, 3);
-    }
-
-    match roll {
-        1 => { monster_cultist(ecs, x, y) }
-        2 => { monster_louse(ecs, x, y) }
-        _ => { monster_jaw_worm(ecs, x, y) }
-    }
 }
 
 pub fn random_potion(ecs: &mut World, x: i32, y: i32) {
@@ -204,7 +152,7 @@ pub fn spawn_room(ecs: &mut World, room: &Rect) {
     for idx in monster_spawn_points.iter() {
         let x = *idx % MAPWIDTH;
         let y = *idx / MAPWIDTH;
-        random_monster(ecs, x as i32, y as i32)
+        monsters::random_monster(ecs, x as i32, y as i32)
     }
 
     // Spawn items

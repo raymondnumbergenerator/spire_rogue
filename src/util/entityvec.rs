@@ -8,9 +8,9 @@ pub struct EntityVec<T>{
 }
 
 impl<T> EntityVec<T> {
-    pub fn new() -> EntityVec<T> {
-        EntityVec { vec: Vec::new() }
-    }
+    // pub fn new() -> EntityVec<T> {
+    //     EntityVec { vec: Vec::new() }
+    // }
 
     pub fn with_capacity(capacity: usize) -> EntityVec<T> {
         EntityVec { vec: Vec::with_capacity(capacity) }

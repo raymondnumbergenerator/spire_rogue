@@ -2,8 +2,8 @@ use specs::prelude::*;
 use rltk::{Rltk, GameState, Point};
 
 use super::{
-    creature, deck, effects, gui, intent, item,
-    map, menu, player, saveload, spawner, systems,
+    creature, deck, effects, gui, item,
+    map, menu, monsters, player, saveload, spawner, systems,
     Position, Renderable, Gamelog, Map,
 };
 
@@ -33,6 +33,8 @@ impl State {
         visibility_sys.run_now(&self.ecs);
         let mut inventory_sys = systems::InventorySystem{};
         inventory_sys.run_now(&self.ecs);
+        let mut monster_sys = systems::MonsterSystem{};
+        monster_sys.run_now(&self.ecs);
         let mut action_sys = systems::ActionSystem{};
         action_sys.run_now(&self.ecs);
 
@@ -64,10 +66,6 @@ impl State {
             }
         }
 
-        let mut monster_sys = systems::MonsterSystem{};
-        monster_sys.run_now(&self.ecs);
-        let mut melee_combat_sys = systems::MeleeCombatSystem{};
-        melee_combat_sys.run_now(&self.ecs);
         let mut damage_sys = systems::DamageSystem{};
         damage_sys.run_now(&self.ecs);
         let mut cleanup_sys = systems::DeadCleanupSystem{};
@@ -99,8 +97,8 @@ impl State {
                         item: action
                     };
                 } else {
-                    let mut intent = self.ecs.write_storage::<intent::PerformAction>();
-                    intent.insert(*self.ecs.fetch::<Entity>(), intent::PerformAction{ action: action, target: None }).expect("Unable to insert intent::PerformAction");
+                    let mut intent = self.ecs.write_storage::<creature::PerformAction>();
+                    intent.insert(*self.ecs.fetch::<Entity>(), creature::PerformAction{ action: action, target: None }).expect("Unable to insert creature::PerformAction");
 
                     // Check if action requires discard
                     if let Some(require_discard) = self.ecs.read_storage::<effects::DiscardCard>().get(action) {
@@ -257,6 +255,53 @@ impl GameState for State {
             RunState::MonsterTurn => {
                 self.run_systems();
                 self.ecs.maintain();
+
+                // Find all used intents
+                let mut to_update: Vec<Option<monsters::Attacks>> = Vec::new();
+                {
+                    let attack_cycles = { self.ecs.read_storage::<creature::AttackCycle>().clone() };
+                    let intents = self.ecs.read_storage::<creature::Intent>();
+
+                    for (ac, intent) in (&attack_cycles, &intents).join() {
+                        match intent.used {
+                            true => to_update.push(Some(ac.attacks[ac.cycle].clone())),
+                            false => to_update.push(None),
+                        }
+                    }
+                }
+
+                // Generate new intents
+                let mut new_intents: Vec<Option<Entity>> = Vec::new();
+                {
+                    for attacks in to_update {
+                        match attacks {
+                            Some(atk) => new_intents.push(Some(monsters::build_attack(&mut self.ecs, atk).build())),
+                            None => new_intents.push(None)
+                        }
+                    }
+                }
+
+                // Assign new intents
+                let mut to_delete: Vec<Entity> = Vec::new();
+                {
+                    let mut monster_intents = self.ecs.write_storage::<creature::Intent>();
+
+                    for (i, mut intent) in (&mut monster_intents).join().enumerate() {
+                        match new_intents[i] {
+                            Some(new_intent) => {
+                                to_delete.push(intent.intent);
+                                intent.intent = new_intent;
+                            }
+                            None => {}
+                        }
+                    }
+                }
+
+                // Delete old intents
+                for old in to_delete {
+                    self.ecs.delete_entity(old).expect("Unable to delete old monster intent");
+                }
+
                 newrunstate = RunState::EndTurn{ player_end_turn: false };
             }
             RunState::ShowInventory => {
@@ -274,8 +319,8 @@ impl GameState for State {
                     gui::ItemMenuResult::NoResponse => {},
                     gui::ItemMenuResult::Selected => {
                         {
-                            let mut intent = self.ecs.write_storage::<intent::PerformAction>();
-                            intent.insert(*self.ecs.fetch::<Entity>(), intent::PerformAction{ action: item, target: result.1 }).expect("Unable to insert intent::PerformAction");
+                            let mut intent = self.ecs.write_storage::<creature::PerformAction>();
+                            intent.insert(*self.ecs.fetch::<Entity>(), creature::PerformAction{ action: item, target: result.1 }).expect("Unable to insert creature::PerformAction");
                             // Check if action requires discard
                             if let Some(require_discard) = self.ecs.read_storage::<effects::DiscardCard>().get(item) {
                                 newrunstate = RunState::DiscardCard{ number: require_discard.number };

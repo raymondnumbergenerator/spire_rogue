@@ -13,7 +13,7 @@ const SAVE_PATH: &str = "./save.json";
 use super::{
     util::entityvec::EntityVec,
     Name, Position, Renderable, Map, deck,
-    creature, effects, item, intent, status
+    creature, effects, item, status
 };
 
 pub struct SerializeMe;
@@ -97,9 +97,9 @@ pub fn save_game(ecs: &mut World) {
         serialize_individually!(
             ecs, serializer, data, SerializableResources, SerializableDeck, Name, Position, Renderable,
             creature::Player, creature::Monster, creature::BlocksTile, creature::Viewshed, creature::SufferDamage,
+            creature::PerformAction, creature::PickupItem, creature::Attack, creature::Intent, creature::AttackCycle,
             item::Item, item::Card, item::Potion, item::Ethereal, item::InBackpack, item::Targeted, item::SelfTargeted, item::AreaOfEffect,
             effects::DealDamage, effects::GainBlock, effects::DiscardCard, effects::DrawCard, effects::GainCard,
-            intent::PerformAction, intent::PickupItem, intent::MeleeTarget,
             status::Weak, status::Vulnerable, status::Poison
         );
     }
@@ -127,9 +127,9 @@ pub fn load_game(ecs: &mut World) {
         deserialize_individually!(
             ecs, deserializer, data, SerializableResources, SerializableDeck, Name, Position, Renderable,
             creature::Player, creature::Monster, creature::BlocksTile, creature::Viewshed, creature::SufferDamage,
+            creature::PerformAction, creature::PickupItem, creature::Attack, creature::Intent, creature::AttackCycle,
             item::Item, item::Card, item::Potion, item::Ethereal, item::InBackpack, item::Targeted, item::SelfTargeted, item::AreaOfEffect,
             effects::DealDamage, effects::GainBlock, effects::DiscardCard, effects::DrawCard, effects::GainCard,
-            intent::PerformAction, intent::PickupItem, intent::MeleeTarget,
             status::Weak, status::Vulnerable, status::Poison
         );
     }
