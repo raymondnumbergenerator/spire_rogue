@@ -1,7 +1,7 @@
 use specs::prelude::*;
 use super::super::{Name, Gamelog, Map, Position, creature, item, RunState, status};
 
-use rltk::{Point};
+use rltk::{Point, RandomNumberGenerator};
 
 pub struct MonsterSystem {}
 
@@ -12,6 +12,7 @@ impl<'a> System<'a> for MonsterSystem {
         ReadExpect<'a, RunState>,
         WriteExpect<'a, Gamelog>,
         WriteExpect<'a, Map>,
+        WriteExpect<'a, RandomNumberGenerator>,
         ReadStorage<'a, Name>,
         WriteStorage<'a, Position>,
         ReadStorage<'a, item::Targeted>,
@@ -25,7 +26,7 @@ impl<'a> System<'a> for MonsterSystem {
     );
 
     fn run(&mut self, data : Self::SystemData) {
-        let (entities, player_pos, runstate, mut log, mut map, names, mut positions, targeted,
+        let (entities, player_pos, runstate, mut log, mut map, mut rng, names, mut positions, targeted,
             mut viewshed, monster, mut combat_stats, mut attack_cycles, mut monster_intents,
             mut intent_action, mut status_poison) = data;
         
@@ -53,7 +54,7 @@ impl<'a> System<'a> for MonsterSystem {
             }
         }
 
-        for (ent, mut viewshed, mut pos, mut atk, mut intent, _) in (&entities, &mut viewshed, &mut positions, &mut attack_cycles, &mut monster_intents, &monster).join() {
+        for (ent, mut viewshed, mut pos, mut ac, mut intent, _) in (&entities, &mut viewshed, &mut positions, &mut attack_cycles, &mut monster_intents, &monster).join() {
             let distance = rltk::DistanceAlg::Pythagoras.distance2d(Point::new(pos.x, pos.y), *player_pos);
             let range = match targeted.get(intent.intent) {
                 Some(r) => { r.range }
@@ -65,8 +66,30 @@ impl<'a> System<'a> for MonsterSystem {
                 // Perform action if player is in range
                 intent_action.insert(ent, creature::PerformAction{ action: intent.intent, target: Some(Point::new(player_pos.x, player_pos.y)) })
                     .expect("Unable to insert intent::PerformAction for monsters");
-                atk.cycle = (atk.cycle + 1) % atk.attacks.len();
+
+                // Pick next attack cycle
                 intent.used = true;
+                match &ac.weights {
+                    // Pick next attack based on weight
+                    Some(weights) => {
+                        let total_weight: i32 = ac.total_weight;
+                        let mut roll = rng.roll_dice(1, total_weight) - 1;
+                        let mut next_cycle = 0;
+
+                        while roll > 0 {
+                            if roll < weights[next_cycle] {
+                                ac.cycle = next_cycle;
+                                break;
+                            }
+                            roll -= weights[next_cycle];
+                            next_cycle += 1;
+                        }
+                    }
+                    // Move to next attack if attacks aren't weighted
+                    None => {
+                        ac.cycle = (ac.cycle + 1) % ac.attacks.len();
+                    }
+                }
             } else if viewshed.visible_tiles.contains(&*player_pos) {
                 // Move towards the player
                 let path = rltk::a_star_search(
