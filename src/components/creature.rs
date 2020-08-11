@@ -22,9 +22,11 @@ pub struct Monster {}
 pub struct CombatStats {
     pub max_hp: i32,
     pub hp: i32,
-    pub dexterity: i32,
-    pub strength: i32,
     pub block: i32,
+    pub base_strength: i32,
+    pub strength: i32,
+    pub base_dexterity: i32,
+    pub dexterity: i32,
 }
 
 #[derive(Component, Debug, Serialize, Deserialize, Clone)]
@@ -104,19 +106,23 @@ impl AttackCycle {
         }
     }
 
-    pub fn add_weighted(&mut self, attack: monsters::Attacks, weight: i32) -> monsters::Attacks {
-        self.attacks.push(attack.clone());
-        let mut new_weights = self.weights.clone().unwrap();
+    pub fn add_weighted(mut self, attack: monsters::Attacks, weight: i32) -> AttackCycle {
+        if let None = self.weights { panic!("Attempted to add weighted attacks to sequential attack cycle.") }
+
+        self.attacks.push(attack);
+        let mut new_weights = self.weights.unwrap();
         new_weights.push(weight);
         self.total_weight += weight;
         self.weights = Some(new_weights);
 
-        attack
+        self
     }
 
-    pub fn add_sequential(&mut self, attack: monsters::Attacks) -> monsters::Attacks {
-        self.attacks.push(attack.clone());
+    pub fn add_sequential(mut self, attack: monsters::Attacks) -> AttackCycle {
+        if let Some(_) = self.weights { panic!("Attempted to add sequential attacks to weighted attack cycle.") }
 
-        attack
+        self.attacks.push(attack);
+
+        self
     }
 }

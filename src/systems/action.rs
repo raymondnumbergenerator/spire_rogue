@@ -30,6 +30,7 @@ impl<'a> System<'a> for ActionSystem {
         ReadStorage<'a, effects::DrawCard>,
         ReadStorage<'a, effects::GainCard>,
         WriteExpect<'a, effects::GainCardQueue>,
+        ReadStorage<'a, effects::BuffStrength>,
         WriteStorage<'a, status::Weak>,
         WriteStorage<'a, status::Vulnerable>,
         WriteStorage<'a, status::Poison>,
@@ -39,7 +40,8 @@ impl<'a> System<'a> for ActionSystem {
         let (entities, player_entity, mut log, map, names,
             mut player, creatures, mut combat_stats, mut suffer_damage,
             mut intent_action, mut deck, potions, ethereal, self_targeted, aoe, cards,
-            effect_gain_block, effect_deal_damage, effect_draw, gain_card, mut gain_card_queue,
+            effect_block, effect_damage, effect_draw, gain_card, mut gain_card_queue,
+            effect_strength,
             mut status_weak, mut status_vulnerable, mut status_poison) = data;
 
         for (entity, intent) in (&entities, &intent_action).join() {
@@ -79,7 +81,7 @@ impl<'a> System<'a> for ActionSystem {
             }
 
             // Apply gain block to caster
-            if let Some(action) = effect_gain_block.get(intent.action) {
+            if let Some(action) = effect_block.get(intent.action) {
                 let mut amount = 0;
                 if let Some(stats) = combat_stats.get_mut(entity) {
                     amount = i32::max(0, action.amount + stats.dexterity);
@@ -94,18 +96,18 @@ impl<'a> System<'a> for ActionSystem {
             }
 
             // Deal damage to affected targets
-            if let Some(action) = effect_deal_damage.get(intent.action) {
+            if let Some(action) = effect_damage.get(intent.action) {
                 for target in targets.iter() {
                     let stats = combat_stats.get(entity).unwrap();
                     let mut dmg = i32::max(0, action.amount + stats.strength);
 
                     // Check for status::Weak
-                    if let Some(_) = status_weak.get_mut(entity) {
+                    if let Some(_) = status_weak.get(entity) {
                         dmg = (dmg as f32 * 0.75) as i32;
                     }
 
                     // Check for status::Vulnerable
-                    if let Some(_) = status_vulnerable.get_mut(*target) {
+                    if let Some(_) = status_vulnerable.get(*target) {
                         dmg = (dmg as f32 * 1.5) as i32;
                     }
 
@@ -115,6 +117,17 @@ impl<'a> System<'a> for ActionSystem {
                         names.get(intent.action).unwrap().name,
                         names.get(*target).unwrap().name,
                         dmg))
+                }
+            }
+
+            // Apply strength buff to caster
+            if let Some(action) = effect_strength.get(intent.action) {
+                if let Some(stats) = combat_stats.get_mut(entity) {
+                    stats.strength += action.amount;
+                    log.push(format!("{} uses {} and gains {} strength.",
+                        names.get(entity).unwrap().name,
+                        names.get(intent.action).unwrap().name,
+                        action.amount))
                 }
             }
 

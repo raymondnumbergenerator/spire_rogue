@@ -58,21 +58,32 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
     }
 
     // Push enemy intent to tooltips
-    for (position, _, ac) in (&positions, &monsters, &attack_cycles).join() {
+    for (position, _, ac, stat) in (&positions, &monsters, &attack_cycles, &combat_stats).join() {
         let idx = map.xy_idx(position.x, position.y);
         if position.x == mouse_pos.0 && position.y == mouse_pos.1 && map.visible_tiles[idx] {
             match ac.attacks[ac.cycle] {
                 monsters::Attacks::NormalAttack{name: _, amount, range} => {
-                    tooltip.push(format!("{}:A{}", range, amount));
+                    let damage = amount + stat.strength;
+                    tooltip.push(format!("{}:A{}", range, damage));
                 }
                 monsters::Attacks::GainBlock{name: _, amount, range: _} => {
-                    tooltip.push(format!("B{}", amount));
+                    let block = amount + stat.dexterity;
+                    tooltip.push(format!("{}", block));
                 }
                 monsters::Attacks::AttackAndBlock{name: _, damage_amount, block_amount, range} => {
-                    tooltip.push(format!("{}:A{}B{}", range, damage_amount, block_amount));
+                    let damage = damage_amount + stat.strength;
+                    let block = block_amount + stat.dexterity;
+                    tooltip.push(format!("{}:A{}B{}", range, damage, block));
                 }
                 monsters::Attacks::ApplyWeak{name: _, turns, range} => {
                     tooltip.push(format!("{}:W{}", range, turns));
+                }
+                monsters::Attacks::BuffStrength{name: _, amount, range: _} => {
+                    tooltip.push(format!("S{}", amount));
+                }
+                monsters::Attacks::BlockAndBuffStrength{name: _, block_amount, buff_amount, range: _} => {
+                    let block = block_amount + stat.dexterity;
+                    tooltip.push(format!("B{}S{}", block, buff_amount));
                 }
             }
             draw_intents = true;

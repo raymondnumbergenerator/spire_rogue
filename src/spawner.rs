@@ -20,7 +20,10 @@ pub fn player(ecs: &mut World, x: i32, y: i32) -> Entity {
         })
         .with(creature::Creature{})
         .with(creature::Player{ max_energy: 3, energy: 3 })
-        .with(creature::CombatStats{ max_hp: 70, hp: 70, dexterity: 0, strength: 0, block: 0 })
+        .with(creature::CombatStats{ max_hp: 70, hp: 70, block: 0,
+            base_strength: 0, strength: 0,
+            base_dexterity: 0, dexterity: 0
+        })
         .with(creature::Viewshed{ visible_tiles: Vec::new(), range: 8, dirty: true })
         .marked::<SimpleMarker<saveload::SerializeMe>>()
         .build()

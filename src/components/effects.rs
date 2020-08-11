@@ -49,3 +49,8 @@ pub struct GainCard {
     pub number: i32,
     pub to_hand: bool,
 }
+
+#[derive(Component, Debug, ConvertSaveload, Clone)]
+pub struct BuffStrength {
+    pub amount: i32
+}

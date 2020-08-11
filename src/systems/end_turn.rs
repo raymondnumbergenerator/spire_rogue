@@ -72,12 +72,18 @@ impl<'a> System<'a> for EndTurnSystem {
             }
         }
 
-        // Decay all block
+        // Decay stats
         for (ent, mut stats) in (&entities, &mut combat_stats).join() {
             if player_turn {
-                if !(ent == *player_entity) { stats.block = 0; }
+                if !(ent == *player_entity) {
+                    stats.block = 0;
+                    stats.strength = (stats.strength as f32 - ((stats.strength - stats.base_strength) as f32 * 0.25)) as i32;
+                }
             } else {
-                if ent == *player_entity { stats.block = 0; }
+                if ent == *player_entity {
+                    stats.block = 0;
+                    stats.strength = (stats.strength as f32 - ((stats.strength - stats.base_strength) as f32 * 0.25)) as i32;
+                }
             }
         }
 

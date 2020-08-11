@@ -11,6 +11,8 @@ pub enum Attacks {
     GainBlock{ name: String, amount: i32, range: i32 },
     AttackAndBlock{ name: String, damage_amount: i32, block_amount: i32, range: i32 },
     ApplyWeak{ name: String, turns: i32, range: i32 },
+    BuffStrength{ name: String, amount: i32, range: i32 },
+    BlockAndBuffStrength{ name: String, block_amount: i32, buff_amount: i32, range: i32},
 }
 
 pub fn build_attack(ecs: &mut World, attack: Attacks) -> EntityBuilder {
@@ -38,6 +40,17 @@ pub fn build_attack(ecs: &mut World, attack: Attacks) -> EntityBuilder {
             atk = atk.with(Name{ name: name.to_string() });
             atk = atk.with(item::Targeted{ range });
             atk = atk.with(status::Weak{ turns });
+        }
+        Attacks::BuffStrength{name, amount, range} => {
+            atk = atk.with(Name{ name: name.to_string() });
+            atk = atk.with(item::Targeted{ range });
+            atk = atk.with(effects::BuffStrength{ amount });
+        }
+        Attacks::BlockAndBuffStrength{name, block_amount, buff_amount, range} => {
+            atk = atk.with(Name{ name: name.to_string() });
+            atk = atk.with(item::Targeted{ range });
+            atk = atk.with(effects::GainBlock{ amount: block_amount });
+            atk = atk.with(effects::BuffStrength{ amount: buff_amount });
         }
     }
 

@@ -26,19 +26,28 @@ fn build_monster<S: ToString>(ecs: &mut World, name: S, x: i32, y: i32, glyph: r
 
 fn cultist(ecs: &mut World, x: i32, y: i32) {
     let hp = ecs.write_resource::<RandomNumberGenerator>().range(48, 55);
-    let mut attack_cycle = creature::AttackCycle::new_sequential();
-    let intent = monsters::build_attack(ecs,
-        attack_cycle.add_sequential(
-            monsters::Attacks::NormalAttack{
-                name: "Dark Strike".to_string(),
-                amount: 6,
-                range: 1
-            }
-        )
-    ).build();
+
+    let attack_incantation = monsters::Attacks::BuffStrength{
+        name: "Incantation".to_string(),
+        amount: 4,
+        range: 2
+    };
+    let attack_dark_strike = monsters::Attacks::NormalAttack{
+        name: "Dark Strike".to_string(),
+        amount: 6,
+        range: 1
+    };
+    let intent = monsters::build_attack(ecs, attack_incantation.clone()).build();
+
+    let attack_cycle = creature::AttackCycle::new_weighted()
+        .add_weighted(attack_incantation, 1)
+        .add_weighted(attack_dark_strike, 4);
 
     build_monster(ecs, "Cultist", x, y, rltk::to_cp437('c'), RGB::named(rltk::RED))
-        .with(creature::CombatStats{ max_hp: hp, hp: hp, dexterity: 0, strength: 0, block: 0 })
+        .with(creature::CombatStats{ max_hp: hp, hp: hp, block: 0,
+            base_strength: 0, strength: 0,
+            base_dexterity: 0, dexterity: 0
+        })
         .with(attack_cycle)
         .with(creature::Intent{ intent, used: false })
         .build();
@@ -46,26 +55,28 @@ fn cultist(ecs: &mut World, x: i32, y: i32) {
 
 fn acid_slime_s(ecs: &mut World, x: i32, y: i32) {
     let hp = ecs.write_resource::<RandomNumberGenerator>().range(8, 12);
-    let mut attack_cycle = creature::AttackCycle::new_sequential();
-    let intent = monsters::build_attack(ecs,
-        attack_cycle.add_sequential(
-            monsters::Attacks::NormalAttack{
-                name: "Tackle".to_string(),
-                amount: 3,
-                range: 1,
-            }
-        )
-    ).build();
-    attack_cycle.add_sequential(
-        monsters::Attacks::ApplyWeak{
-            name: "Lick".to_string(),
-            turns: 1,
-            range: 1,
-        }
-    );
+
+    let attack_tackle = monsters::Attacks::NormalAttack{
+        name: "Tackle".to_string(),
+        amount: 3,
+        range: 1
+    };
+    let attack_lick = monsters::Attacks::ApplyWeak{
+        name: "Lick".to_string(),
+        turns: 1,
+        range: 1
+    };
+    let intent = monsters::build_attack(ecs, attack_tackle.clone()).build();
+
+    let attack_cycle = creature::AttackCycle::new_sequential()
+        .add_sequential(attack_tackle)
+        .add_sequential(attack_lick);
 
     build_monster(ecs, "Acid Slime", x, y, rltk::to_cp437('l'), RGB::named(rltk::RED))
-        .with(creature::CombatStats{ max_hp: hp, hp: hp, dexterity: 0, strength: 0, block: 0 })
+        .with(creature::CombatStats{ max_hp: hp, hp: hp, block: 0,
+            base_strength: 0, strength: 0,
+            base_dexterity: 0, dexterity: 0
+        })
         .with(attack_cycle)
         .with(creature::Intent{ intent, used: false })
         .build();
@@ -73,26 +84,36 @@ fn acid_slime_s(ecs: &mut World, x: i32, y: i32) {
 
 fn jaw_worm(ecs: &mut World, x: i32, y: i32) {
     let hp = ecs.write_resource::<RandomNumberGenerator>().range(40, 45);
-    let mut attack_cycle = creature::AttackCycle::new_weighted();
-    let intent = monsters::build_attack(ecs,
-        attack_cycle.add_weighted(
-            monsters::Attacks::NormalAttack{
-                name: "Chomp".to_string(),
-                amount: 11,
-                range: 1
-            }, 2
-        )
-    ).build();
-    attack_cycle.add_weighted(
-        monsters::Attacks::AttackAndBlock{
-            name: "Thrash".to_string(),
-            damage_amount: 7,
-            block_amount: 5,
-            range: 1}, 3
-    );
+
+    let attack_chomp = monsters::Attacks::NormalAttack{
+        name: "Chomp".to_string(),
+        amount: 11,
+        range: 1
+    };
+    let attack_thrash = monsters::Attacks::AttackAndBlock{
+        name: "Thrash".to_string(),
+        damage_amount: 7,
+        block_amount: 5,
+        range: 1
+    };
+    let attack_bellow = monsters::Attacks::BlockAndBuffStrength{
+        name: "Bellow".to_string(),
+        block_amount: 6,
+        buff_amount: 3,
+        range: 2
+    };
+    let intent = monsters::build_attack(ecs, attack_chomp.clone()).build();
+
+    let attack_cycle = creature::AttackCycle::new_weighted()
+        .add_weighted(attack_chomp, 5)
+        .add_weighted(attack_thrash, 6)
+        .add_weighted(attack_bellow, 9);
 
     build_monster(ecs, "Jaw Worm", x, y, rltk::to_cp437('j'), RGB::named(rltk::RED))
-        .with(creature::CombatStats{ max_hp: hp, hp: hp, dexterity: 0, strength: 0, block: 0 })
+        .with(creature::CombatStats{ max_hp: hp, hp: hp, block: 0,
+            base_strength: 0, strength: 0,
+            base_dexterity: 0, dexterity: 0
+        })
         .with(attack_cycle)
         .with(creature::Intent{ intent, used: false })
         .build();
