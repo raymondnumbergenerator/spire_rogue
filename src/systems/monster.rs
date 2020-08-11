@@ -69,27 +69,7 @@ impl<'a> System<'a> for MonsterSystem {
 
                 // Pick next attack cycle
                 intent.used = true;
-                match &ac.weights {
-                    // Pick next attack based on weight
-                    Some(weights) => {
-                        let total_weight: i32 = ac.total_weight;
-                        let mut roll = rng.roll_dice(1, total_weight) - 1;
-                        let mut next_cycle = 0;
-
-                        while roll > 0 {
-                            if roll < weights[next_cycle] {
-                                ac.cycle = next_cycle;
-                                break;
-                            }
-                            roll -= weights[next_cycle];
-                            next_cycle += 1;
-                        }
-                    }
-                    // Move to next attack if attacks aren't weighted
-                    None => {
-                        ac.cycle = (ac.cycle + 1) % ac.attacks.len();
-                    }
-                }
+                ac.next_attack(&mut rng);
             } else if viewshed.visible_tiles.contains(&*player_pos) {
                 // Move towards the player
                 let path = rltk::a_star_search(

@@ -32,6 +32,15 @@ pub enum GainableCard {
     Slimed,
 }
 
+impl GainableCard {
+    pub fn to_name(self) -> String {
+        match self {
+            GainableCard::Shiv => "Shiv".to_string(),
+            GainableCard::Slimed => "Slimed".to_string()
+        }
+    }
+}
+
 pub fn gain_card(ecs: &mut World, card: GainableCard) -> Entity {
     match card {
         GainableCard::Shiv => { cards::neutral::shiv(ecs) }

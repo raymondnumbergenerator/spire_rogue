@@ -213,13 +213,9 @@ impl<'a> System<'a> for ActionSystem {
                         false => { gain_card_queue.to_discard.push(action.card); }
                     }
                 }
-                let card_name = match action.card {
-                    effects::GainableCard::Shiv => { "Shiv" }
-                    effects::GainableCard::Slimed => { "Slimed" }
-                };
-                log.push(format!("You gain {} {}(s).",
+                log.push(format!("You gain {} {}.",
                     action.number,
-                    card_name));
+                    action.card.to_name()));
             };
             
             // Discard used card or remove used potion

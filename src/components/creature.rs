@@ -6,6 +6,8 @@ use serde::{Serialize, Deserialize};
 
 use super::super::{monsters};
 
+use rltk::RandomNumberGenerator;
+
 #[derive(Component, Debug, Serialize, Deserialize, Clone)]
 pub struct Creature {}
 
@@ -124,5 +126,26 @@ impl AttackCycle {
         self.attacks.push(attack);
 
         self
+    }
+
+    pub fn next_attack(&mut self, rng: &mut RandomNumberGenerator) {
+        match &self.weights {
+            Some(w) => {
+                let mut roll = rng.roll_dice(1, self.total_weight) - 1;
+                let mut next_cycle = 0;
+
+                while roll > 0 {
+                    if roll < w[next_cycle] {
+                        self.cycle = next_cycle;
+                        return;
+                    }
+                    roll -= w[next_cycle];
+                    next_cycle += 1;
+                }
+            }
+            None => {
+                self.cycle = (self.cycle + 1) & self.attacks.len();
+            }
+        }
     }
 }
