@@ -4,7 +4,7 @@ use rltk::{RGB, RandomNumberGenerator};
 
 use super::super::{
     Name, Position, Renderable,
-    creature, monsters, saveload,
+    creature, effects, monsters, saveload,
 };
 
 fn build_monster<S: ToString>(ecs: &mut World, name: S, x: i32, y: i32, glyph: rltk::FontCharType, fg: RGB) -> EntityBuilder {
@@ -53,35 +53,6 @@ fn cultist(ecs: &mut World, x: i32, y: i32) {
         .build();
 }
 
-fn acid_slime_s(ecs: &mut World, x: i32, y: i32) {
-    let hp = ecs.write_resource::<RandomNumberGenerator>().range(8, 12);
-
-    let attack_tackle = monsters::Attacks::NormalAttack{
-        name: "Tackle".to_string(),
-        amount: 3,
-        range: 1
-    };
-    let attack_lick = monsters::Attacks::ApplyWeak{
-        name: "Lick".to_string(),
-        turns: 1,
-        range: 1
-    };
-    let intent = monsters::build_attack(ecs, attack_tackle.clone()).build();
-
-    let attack_cycle = creature::AttackCycle::new_sequential()
-        .add_sequential(attack_tackle)
-        .add_sequential(attack_lick);
-
-    build_monster(ecs, "Acid Slime", x, y, rltk::to_cp437('l'), RGB::named(rltk::RED))
-        .with(creature::CombatStats{ max_hp: hp, hp: hp, block: 0,
-            base_strength: 0, strength: 0,
-            base_dexterity: 0, dexterity: 0
-        })
-        .with(attack_cycle)
-        .with(creature::Intent{ intent, used: false })
-        .build();
-}
-
 fn jaw_worm(ecs: &mut World, x: i32, y: i32) {
     let hp = ecs.write_resource::<RandomNumberGenerator>().range(40, 45);
 
@@ -119,16 +90,83 @@ fn jaw_worm(ecs: &mut World, x: i32, y: i32) {
         .build();
 }
 
+fn acid_slime_m(ecs: &mut World, x: i32, y: i32) {
+    let hp = ecs.write_resource::<RandomNumberGenerator>().range(28, 32);
+
+    let attack_corrosive_spit = monsters::Attacks::AttackAndGiveCard{
+        name: "Corrosive Spit".to_string(),
+        amount: 7,
+        card: effects::GainableCard::Slimed,
+        number: 1,
+        range: 1
+    };
+    let attack_lick = monsters::Attacks::ApplyWeak{
+        name: "Lick".to_string(),
+        turns: 1,
+        range: 1
+    };
+    let attack_tackle = monsters::Attacks::NormalAttack{
+        name: "Tackle".to_string(),
+        amount: 10,
+        range: 1
+    };
+    let intent = monsters::build_attack(ecs, attack_corrosive_spit.clone()).build();
+
+    let attack_cycle = creature::AttackCycle::new_weighted()
+        .add_weighted(attack_corrosive_spit, 3)
+        .add_weighted(attack_lick, 4)
+        .add_weighted(attack_tackle, 3);
+
+    build_monster(ecs, "Acid Slime", x, y, rltk::to_cp437('S'), RGB::named(rltk::RED))
+        .with(creature::CombatStats{ max_hp: hp, hp: hp, block: 0,
+            base_strength: 0, strength: 0,
+            base_dexterity: 0, dexterity: 0
+        })
+        .with(attack_cycle)
+        .with(creature::Intent{ intent, used: false })
+        .build();
+}
+
+fn acid_slime_s(ecs: &mut World, x: i32, y: i32) {
+    let hp = ecs.write_resource::<RandomNumberGenerator>().range(8, 12);
+
+    let attack_tackle = monsters::Attacks::NormalAttack{
+        name: "Tackle".to_string(),
+        amount: 3,
+        range: 1
+    };
+    let attack_lick = monsters::Attacks::ApplyWeak{
+        name: "Lick".to_string(),
+        turns: 1,
+        range: 1
+    };
+    let intent = monsters::build_attack(ecs, attack_tackle.clone()).build();
+
+    let attack_cycle = creature::AttackCycle::new_sequential()
+        .add_sequential(attack_tackle)
+        .add_sequential(attack_lick);
+
+    build_monster(ecs, "Acid Slime", x, y, rltk::to_cp437('s'), RGB::named(rltk::RED))
+        .with(creature::CombatStats{ max_hp: hp, hp: hp, block: 0,
+            base_strength: 0, strength: 0,
+            base_dexterity: 0, dexterity: 0
+        })
+        .with(attack_cycle)
+        .with(creature::Intent{ intent, used: false })
+        .build();
+}
+
 pub fn random_monster(ecs: &mut World, x: i32, y: i32) {
     let roll: i32;
     {
         let mut rng = ecs.write_resource::<RandomNumberGenerator>();
-        roll = rng.roll_dice(1, 3);
+        roll = rng.roll_dice(4, 5);
     }
 
     match roll {
         1 => { cultist(ecs, x, y) }
-        2 => { acid_slime_s(ecs, x, y) }
-        _ => { jaw_worm(ecs, x, y) }
+        2 => { jaw_worm(ecs, x, y) }
+        3 => { acid_slime_s(ecs, x, y) }
+        _ => { acid_slime_m(ecs, x, y) }
     }
 }

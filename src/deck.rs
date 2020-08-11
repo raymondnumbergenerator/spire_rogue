@@ -34,7 +34,7 @@ impl Deck {
         self.discard.clear();
     }
 
-    pub fn discard_card(&mut self, card: Entity, ethereal: bool) {
+    pub fn discard_card(&mut self, card: Entity, destroy: bool) {
         let mut i = 0;
         for c in self.hand.iter() {
             if *c == card {
@@ -43,7 +43,7 @@ impl Deck {
             i += 1;
         }
         let c = self.hand.remove(i);
-        if !ethereal {
+        if !destroy {
             self.discard.push(c);
         }
     }

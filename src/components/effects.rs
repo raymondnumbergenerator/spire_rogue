@@ -29,11 +29,13 @@ pub struct DrawCard {
 #[derive(PartialEq, Copy, Clone, Debug, Serialize, Deserialize)]
 pub enum GainableCard {
     Shiv,
+    Slimed,
 }
 
 pub fn gain_card(ecs: &mut World, card: GainableCard) -> Entity {
     match card {
-        GainableCard::Shiv => { cards::silent::shiv(ecs) }
+        GainableCard::Shiv => { cards::neutral::shiv(ecs) }
+        GainableCard::Slimed => { cards::neutral::slimed(ecs) }
     }
 }
 

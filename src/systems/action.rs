@@ -21,10 +21,11 @@ impl<'a> System<'a> for ActionSystem {
         WriteStorage<'a, creature::PerformAction>,
         WriteExpect<'a, deck::Deck>,
         ReadStorage<'a, item::Potion>,
+        ReadStorage<'a, item::Card>,
         ReadStorage<'a, item::Ethereal>,
+        ReadStorage<'a, item::Fragile>,
         ReadStorage<'a, item::SelfTargeted>,
         ReadStorage<'a, item::AreaOfEffect>,
-        ReadStorage<'a, item::Card>,
         ReadStorage<'a, effects::GainBlock>,
         ReadStorage<'a, effects::DealDamage>,
         ReadStorage<'a, effects::DrawCard>,
@@ -39,7 +40,8 @@ impl<'a> System<'a> for ActionSystem {
     fn run(&mut self, data: Self::SystemData) {
         let (entities, player_entity, mut log, map, names,
             mut player, creatures, mut combat_stats, mut suffer_damage,
-            mut intent_action, mut deck, potions, ethereal, self_targeted, aoe, cards,
+            mut intent_action, mut deck, potions, cards,
+            card_ethereal, card_fragile, self_targeted, aoe,
             effect_block, effect_damage, effect_draw, gain_card, mut gain_card_queue,
             effect_strength,
             mut status_weak, mut status_vulnerable, mut status_poison) = data;
@@ -211,6 +213,13 @@ impl<'a> System<'a> for ActionSystem {
                         false => { gain_card_queue.to_discard.push(action.card); }
                     }
                 }
+                let card_name = match action.card {
+                    effects::GainableCard::Shiv => { "Shiv" }
+                    effects::GainableCard::Slimed => { "Slimed" }
+                };
+                log.push(format!("You gain {} {}(s).",
+                    action.number,
+                    card_name));
             };
             
             // Discard used card or remove used potion
@@ -218,7 +227,12 @@ impl<'a> System<'a> for ActionSystem {
                 if let Some(player_energy) = player.get_mut(*player_entity) {
                     player_energy.energy -= cards.get(intent.action).unwrap().energy_cost;
                 }
-                if let Some(_) = ethereal.get(intent.action) {
+
+                let mut destroy = false;
+                if let Some(_) = card_ethereal.get(intent.action) { destroy = true; }
+                if let Some(_) = card_fragile.get(intent.action) { destroy = true; }
+
+                if destroy {
                     deck.discard_card(intent.action, true);
                     entities.delete(intent.action).expect("Failed to delete entity");
                 } else {

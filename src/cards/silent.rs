@@ -35,14 +35,6 @@ fn survivor(ecs: &mut World) -> Entity {
         .build()
 }
 
-pub fn shiv(ecs: &mut World) -> Entity {
-    build_card(ecs, "Shiv", 0, Rarity::Common)
-        .with(item::Targeted{ range: 1 })
-        .with(effects::DealDamage{ amount: 4 })
-        .with(item::Ethereal{})
-        .build()
-}
-
 fn acrobatics(ecs: &mut World, x: i32, y: i32) -> Entity {
     build_card(ecs, "Acrobatics", 1, Rarity::Common)
         .with(effects::DrawCard{ number: 3 })

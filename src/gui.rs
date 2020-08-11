@@ -73,7 +73,7 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
                 monsters::Attacks::AttackAndBlock{name: _, damage_amount, block_amount, range} => {
                     let damage = damage_amount + stat.strength;
                     let block = block_amount + stat.dexterity;
-                    tooltip.push(format!("{}:A{}B{}", range, damage, block));
+                    tooltip.push(format!("{}:A{},B{}", range, damage, block));
                 }
                 monsters::Attacks::ApplyWeak{name: _, turns, range} => {
                     tooltip.push(format!("{}:W{}", range, turns));
@@ -83,7 +83,11 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
                 }
                 monsters::Attacks::BlockAndBuffStrength{name: _, block_amount, buff_amount, range: _} => {
                     let block = block_amount + stat.dexterity;
-                    tooltip.push(format!("B{}S{}", block, buff_amount));
+                    tooltip.push(format!("B{},S{}", block, buff_amount));
+                }
+                monsters::Attacks::AttackAndGiveCard{name: _, amount, card: _, number: _, range} => {
+                    let damage = amount + stat.strength;
+                    tooltip.push(format!("{}:A{},#", range, damage));
                 }
             }
             draw_intents = true;

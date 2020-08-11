@@ -87,10 +87,11 @@ fn main() -> rltk::BError {
     gs.ecs.register::<effects::BuffStrength>();
 
     gs.ecs.register::<item::Item>();
-    gs.ecs.register::<item::Card>();
     gs.ecs.register::<item::Potion>();
-    gs.ecs.register::<item::Ethereal>();
     gs.ecs.register::<item::InBackpack>();
+    gs.ecs.register::<item::Card>();
+    gs.ecs.register::<item::Ethereal>();
+    gs.ecs.register::<item::Fragile>();
     gs.ecs.register::<item::Targeted>();
     gs.ecs.register::<item::SelfTargeted>();
     gs.ecs.register::<item::AreaOfEffect>();
