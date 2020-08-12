@@ -245,7 +245,7 @@ impl GameState for State {
                 {
                     for attacks in to_update {
                         match attacks {
-                            Some(atk) => new_intents.push(Some(monsters::build_attack(&mut self.ecs, atk).build())),
+                            Some(atk) => new_intents.push(Some(atk.to_attack(&mut self.ecs))),
                             None => new_intents.push(None)
                         }
                     }

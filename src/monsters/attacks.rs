@@ -17,55 +17,58 @@ pub enum Attacks {
     AttackAndGiveCard{ name: String, range: i32, amount: i32, card: effects::GainableCard, number: i32 },
 }
 
-pub fn build_attack(ecs: &mut World, attack: Attacks) -> EntityBuilder {
-    let mut atk = ecs.create_entity()
-        .with(creature::Attack{});
-
-    match attack {
-        Attacks::NormalAttack{name, range, amount } => {
-            atk = atk.with(Name{ name: name.to_string() })
-                .with(item::Targeted{ range })
-                .with(effects::DealDamage{ amount });
+impl Attacks {
+    // Creates and returns the associated atttack Entity
+    pub fn to_attack(self, ecs: &mut World) -> Entity {
+        let mut attack = ecs.create_entity()
+            .with(creature::Attack{});
+    
+        match self {
+            Attacks::NormalAttack{name, range, amount } => {
+                attack = attack.with(Name{ name: name.to_string() })
+                    .with(item::Targeted{ range })
+                    .with(effects::DealDamage{ amount });
+            }
+            Attacks::GainBlock{name, range, amount } => {
+                attack = attack.with(Name{ name: name.to_string() })
+                    .with(item::Targeted{ range })
+                    .with(effects::GainBlock{ amount });
+            }
+            Attacks::AttackAndBlock{name, range, damage_amount, block_amount } => {
+                attack = attack.with(Name{ name: name.to_string() })
+                    .with(item::Targeted{ range })
+                    .with(effects::DealDamage{ amount: damage_amount })
+                    .with(effects::GainBlock{ amount: block_amount });
+            }
+            Attacks::ApplyWeak{name, range, turns } => {
+                attack = attack.with(Name{ name: name.to_string() })
+                    .with(item::Targeted{ range })
+                    .with(status::Weak{ turns });
+            }
+            Attacks::ApplyFrail{name, range, turns } => {
+                attack = attack.with(Name{ name: name.to_string() })
+                    .with(item::Targeted{ range })
+                    .with(status::Frail{ turns });
+            }
+            Attacks::BuffStrength{name, range, amount } => {
+                attack = attack.with(Name{ name: name.to_string() })
+                    .with(item::Targeted{ range })
+                    .with(effects::BuffStrength{ amount });
+            }
+            Attacks::BlockAndBuffStrength{name, range, block_amount, buff_amount } => {
+                attack = attack.with(Name{ name: name.to_string() })
+                    .with(item::Targeted{ range })
+                    .with(effects::GainBlock{ amount: block_amount })
+                    .with(effects::BuffStrength{ amount: buff_amount });
+            }
+            Attacks::AttackAndGiveCard{name, range, amount, card, number } => {
+                attack = attack.with(Name{ name: name.to_string() })
+                    .with(item::Targeted{ range })
+                    .with(effects::DealDamage{ amount })
+                    .with(effects::GainCard{ card, number, to_hand: false })
+            }
         }
-        Attacks::GainBlock{name, range, amount } => {
-            atk = atk.with(Name{ name: name.to_string() })
-                .with(item::Targeted{ range })
-                .with(effects::GainBlock{ amount });
-        }
-        Attacks::AttackAndBlock{name, range, damage_amount, block_amount } => {
-            atk = atk.with(Name{ name: name.to_string() })
-                .with(item::Targeted{ range })
-                .with(effects::DealDamage{ amount: damage_amount })
-                .with(effects::GainBlock{ amount: block_amount });
-        }
-        Attacks::ApplyWeak{name, range, turns } => {
-            atk = atk.with(Name{ name: name.to_string() })
-                .with(item::Targeted{ range })
-                .with(status::Weak{ turns });
-        }
-        Attacks::ApplyFrail{name, range, turns } => {
-            atk = atk.with(Name{ name: name.to_string() })
-                .with(item::Targeted{ range })
-                .with(status::Frail{ turns });
-        }
-        Attacks::BuffStrength{name, range, amount } => {
-            atk = atk.with(Name{ name: name.to_string() })
-                .with(item::Targeted{ range })
-                .with(effects::BuffStrength{ amount });
-        }
-        Attacks::BlockAndBuffStrength{name, range, block_amount, buff_amount } => {
-            atk = atk.with(Name{ name: name.to_string() })
-                .with(item::Targeted{ range })
-                .with(effects::GainBlock{ amount: block_amount })
-                .with(effects::BuffStrength{ amount: buff_amount });
-        }
-        Attacks::AttackAndGiveCard{name, range, amount, card, number } => {
-            atk = atk.with(Name{ name: name.to_string() })
-                .with(item::Targeted{ range })
-                .with(effects::DealDamage{ amount })
-                .with(effects::GainCard{ card, number, to_hand: false })
-        }
+    
+        attack.build()
     }
-
-    atk
 }

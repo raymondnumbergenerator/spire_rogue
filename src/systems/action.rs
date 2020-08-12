@@ -272,10 +272,10 @@ pub fn run(ecs: &mut World) {
     let mut gain_to_hand: Vec<Entity> = Vec::new();
     let mut gain_to_discard: Vec<Entity> = Vec::new();
     for card in gain_to_hand_queue.iter() {
-        gain_to_hand.push(effects::gain_card(ecs, *card));
+        gain_to_hand.push(card.to_card(ecs));
     }
     for card in gain_to_discard_queue.iter() {
-        gain_to_discard.push(effects::gain_card(ecs, *card));
+        gain_to_discard.push(card.to_card(ecs));
     }
 
     let mut deck = ecs.fetch_mut::<deck::Deck>();

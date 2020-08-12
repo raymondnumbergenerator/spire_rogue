@@ -6,7 +6,7 @@ use std::char;
 use super::{
     Map, Name, Position, Point, Gamelog, creature,
     deck::Deck, util::utils, monsters, item, status,
-    map::MAPWIDTH, map::MAPHEIGHT, WINDOWHEIGHT, deck::MAX_HAND_SIZE
+    map::MAPWIDTH, map::MAPHEIGHT, WINDOWWIDTH, WINDOWHEIGHT, deck::MAX_HAND_SIZE
 };
 
 pub const GUISIZE: usize = 14;
@@ -27,11 +27,6 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
     let creatures = ecs.read_storage::<creature::Creature>();
     let monsters = ecs.read_storage::<creature::Monster>();
     let combat_stats = ecs.read_storage::<creature::CombatStats>();
-    let status_weak = ecs.read_storage::<status::Weak>();
-    let status_vulnerable = ecs.read_storage::<status::Vulnerable>();
-    let status_frail = ecs.read_storage::<status::Frail>();
-    let status_poison = ecs.read_storage::<status::Poison>();
-
     let attack_cycles = ecs.read_storage::<creature::AttackCycle>();
 
     let mouse_pos = ctx.mouse_pos();
@@ -99,16 +94,23 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
     }
 
     // Push status effects to tooltips
-    for (position, _, weak, vulnerable, frail, poison) in (&positions, &creatures, status_weak.maybe(),
-            status_vulnerable.maybe(), status_frail.maybe(), status_poison.maybe()).join() {
-        let idx = map.xy_idx(position.x, position.y);
-        if position.x == mouse_pos.0 && position.y == mouse_pos.1 && map.visible_tiles[idx] {
-            if let Some(w) = weak { tooltip.push(format!("W{}", w.turns)); }
-            if let Some(v) = vulnerable { tooltip.push(format!("V{}", v.turns)); }
-            if let Some(v) = frail { tooltip.push(format!("F{}", v.turns)); }
-            if let Some(p) = poison { tooltip.push(format!("P{}", p.turns)); }
-        }
+    {
+        let status_weak = ecs.read_storage::<status::Weak>();
+        let status_vulnerable = ecs.read_storage::<status::Vulnerable>();
+        let status_frail = ecs.read_storage::<status::Frail>();
+        let status_poison = ecs.read_storage::<status::Poison>();
+        for (position, _, weak, vulnerable, frail, poison) in (&positions, &creatures, status_weak.maybe(),
+                status_vulnerable.maybe(), status_frail.maybe(), status_poison.maybe()).join() {
+            let idx = map.xy_idx(position.x, position.y);
+            if position.x == mouse_pos.0 && position.y == mouse_pos.1 && map.visible_tiles[idx] {
+                if let Some(w) = weak { tooltip.push(format!("W{}", w.turns)); }
+                if let Some(v) = vulnerable { tooltip.push(format!("V{}", v.turns)); }
+                if let Some(v) = frail { tooltip.push(format!("F{}", v.turns)); }
+                if let Some(p) = poison { tooltip.push(format!("P{}", p.turns)); }
+            }
+        }        
     }
+
 
     if !tooltip.is_empty() {
         let mut width: i32 = 0;
@@ -120,7 +122,7 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
         let mut tooltip_iter = tooltip.iter();
         let mut x;
         let mut y;
-        if mouse_pos.0 > 40 {
+        if mouse_pos.0 > (WINDOWWIDTH as i32) / 2 {
             x = mouse_pos.0 - width;
             y = mouse_pos.1;
         } else {
@@ -294,12 +296,15 @@ pub fn draw_hand(ecs: &World, ctx: &mut Rltk)  {
     let mut hand: Vec<Entity> = Vec::new();
     let mut i = 1;
     for c in deck.hand.iter() {
+        let card_cost = cards.get(*c).unwrap().energy_cost;
+        let card_cost_color = if card_cost <= player_energy.energy { RGB::named(rltk::YELLOW) } else { RGB::named(rltk::DARK_GRAY) };
+
         ctx.set(INVENTORYPOS + 2, y + 2, RGB::named(rltk::WHITE), RGB::named(rltk::BLACK), rltk::to_cp437('('));
-        ctx.set(INVENTORYPOS + 3, y + 2, RGB::named(rltk::YELLOW), RGB::named(rltk::BLACK), rltk::to_cp437(char::from_digit(i % 10, 10).unwrap()));
+        ctx.set(INVENTORYPOS + 3, y + 2, card_cost_color, RGB::named(rltk::BLACK), rltk::to_cp437(char::from_digit(i % 10, 10).unwrap()));
         ctx.set(INVENTORYPOS + 4, y + 2, RGB::named(rltk::WHITE), RGB::named(rltk::BLACK), rltk::to_cp437(')'));
 
         ctx.print(INVENTORYPOS + 6, y + 2, names.get(*c).unwrap().name.to_string());
-        ctx.print(INVENTORYPOS + 23, y + 2, cards.get(*c).unwrap().energy_cost.to_string());
+        ctx.print(INVENTORYPOS + 23, y + 2, card_cost.to_string());
         hand.push(*c);
         y += 1;
         i += 1;

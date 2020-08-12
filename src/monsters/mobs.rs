@@ -37,7 +37,7 @@ fn cultist(ecs: &mut World, x: i32, y: i32) {
         amount: 6,
         range: 1
     };
-    let intent = monsters::build_attack(ecs, attack_incantation.clone()).build();
+    let intent = attack_incantation.clone().to_attack(ecs);
 
     let attack_cycle = creature::AttackCycle::new_weighted()
         .add_weighted(attack_incantation, 1)
@@ -73,7 +73,7 @@ fn jaw_worm(ecs: &mut World, x: i32, y: i32) {
         buff_amount: 3,
         range: 2
     };
-    let intent = monsters::build_attack(ecs, attack_chomp.clone()).build();
+    let intent = attack_chomp.clone().to_attack(ecs);
 
     let attack_cycle = creature::AttackCycle::new_weighted()
         .add_weighted(attack_chomp, 5)
@@ -110,7 +110,7 @@ fn acid_slime_m(ecs: &mut World, x: i32, y: i32) {
         amount: 10,
         range: 1
     };
-    let intent = monsters::build_attack(ecs, attack_corrosive_spit.clone()).build();
+    let intent = attack_corrosive_spit.clone().to_attack(ecs);
 
     let attack_cycle = creature::AttackCycle::new_weighted()
         .add_weighted(attack_corrosive_spit, 3)
@@ -142,7 +142,7 @@ fn spike_slime_m(ecs: &mut World, x: i32, y: i32) {
         turns: 1,
         range: 1
     };
-    let intent = monsters::build_attack(ecs, attack_flame_tackle.clone()).build();
+    let intent = attack_flame_tackle.clone().to_attack(ecs);
 
     let attack_cycle = creature::AttackCycle::new_weighted()
         .add_weighted(attack_flame_tackle, 3)
@@ -171,7 +171,7 @@ fn acid_slime_s(ecs: &mut World, x: i32, y: i32) {
         turns: 1,
         range: 1
     };
-    let intent = monsters::build_attack(ecs, attack_tackle.clone()).build();
+    let intent = attack_tackle.clone().to_attack(ecs);
 
     let attack_cycle = creature::AttackCycle::new_sequential()
         .add_sequential(attack_tackle)

@@ -39,12 +39,13 @@ impl GainableCard {
             GainableCard::Slimed => "Slimed".to_string()
         }
     }
-}
 
-pub fn gain_card(ecs: &mut World, card: GainableCard) -> Entity {
-    match card {
-        GainableCard::Shiv => { cards::neutral::shiv(ecs) }
-        GainableCard::Slimed => { cards::neutral::slimed(ecs) }
+    // Creates and returns the associated card Entity
+    pub fn to_card(self, ecs: &mut World) -> Entity {
+        match self {
+            GainableCard::Shiv => { cards::neutral::shiv(ecs) }
+            GainableCard::Slimed => { cards::neutral::slimed(ecs) }
+        }
     }
 }
 
