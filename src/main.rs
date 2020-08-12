@@ -93,11 +93,11 @@ fn main() -> rltk::BError {
     gs.ecs.register::<item::Ethereal>();
     gs.ecs.register::<item::Fragile>();
     gs.ecs.register::<item::Targeted>();
-    gs.ecs.register::<item::SelfTargeted>();
     gs.ecs.register::<item::AreaOfEffect>();
 
     gs.ecs.register::<status::Weak>();
     gs.ecs.register::<status::Vulnerable>();
+    gs.ecs.register::<status::Frail>();
     gs.ecs.register::<status::Poison>();
 
     // Create map, mark player spawn position
@@ -127,13 +127,6 @@ fn main() -> rltk::BError {
         deck.draw_card();
     }
     gs.ecs.insert(deck);
-
-    // Create gain queue and register <effects::GainCardQueue> resource
-    let gain_queue = effects::GainCardQueue{
-        to_hand: Vec::new(),
-        to_discard: Vec::new()
-    };
-    gs.ecs.insert(gain_queue);
 
     // Register <Map> resource
     gs.ecs.insert(map);

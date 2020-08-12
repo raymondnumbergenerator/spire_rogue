@@ -15,6 +15,11 @@ pub struct Vulnerable {
 }
 
 #[derive(Component, Debug, ConvertSaveload, Clone)]
+pub struct Frail {
+    pub turns: i32
+}
+
+#[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct Poison {
     pub turns: i32
 }

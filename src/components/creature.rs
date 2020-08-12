@@ -81,30 +81,28 @@ pub struct Intent {
 #[derive(Component, ConvertSaveload, Clone)]
 pub struct AttackCycle {
     pub attacks: Vec<monsters::Attacks>,
-
-    // Set weights to None if attacks are sequential otherwise
-    // indexes should match with the corresponding item in attacks
-    pub weights: Option<Vec<i32>>,
-    pub total_weight: i32,
     pub cycle: usize,
+
+    weights: Option<Vec<i32>>,
+    total_weight: i32,
 }
 
 impl AttackCycle {
     pub fn new_sequential() -> AttackCycle {
         AttackCycle {
             attacks: Vec::new(),
+            cycle: 0,
             weights: None,
             total_weight: 0,
-            cycle: 0,
         }
     }
 
     pub fn new_weighted() -> AttackCycle {
         AttackCycle {
             attacks: Vec::new(),
+            cycle: 0,
             weights: Some(Vec::new()),
             total_weight: 0,
-            cycle: 0,
         }
     }
 

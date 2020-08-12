@@ -1,8 +1,7 @@
 use specs::prelude::*;
-use rltk::RandomNumberGenerator;
 
 use super::super::{
-    Position, item, effects, status
+    Position, item, effects
 };
 
 use super::card::{build_card, Rarity};

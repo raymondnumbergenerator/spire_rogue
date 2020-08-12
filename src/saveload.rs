@@ -28,7 +28,6 @@ pub struct SerializableDeck {
 #[derive(Component, Serialize, Deserialize, Clone)]
 pub struct SerializableResources {
     pub map: Map,
-    pub gain_queue: effects::GainCardQueue,
 }
 
 macro_rules! serialize_individually {
@@ -67,11 +66,9 @@ pub fn save_exists() -> bool {
 pub fn save_game(ecs: &mut World) {
     // Helper to serialize various resources
     let map_copy = ecs.get_mut::<Map>().unwrap().clone();
-    let gain_queue_copy = { ecs.get_mut::<effects::GainCardQueue>().unwrap().clone() };
     let resource_helper = ecs.create_entity()
                         .with(SerializableResources{
                             map: map_copy,
-                            gain_queue: gain_queue_copy
                         })
                         .marked::<SimpleMarker<SerializeMe>>()
                         .build();
@@ -98,10 +95,10 @@ pub fn save_game(ecs: &mut World) {
             ecs, serializer, data, SerializableResources, SerializableDeck, Name, Position, Renderable,
             creature::Player, creature::Monster, creature::BlocksTile, creature::Viewshed, creature::SufferDamage,
             creature::PerformAction, creature::PickupItem, creature::Attack, creature::Intent, creature::AttackCycle,
-            item::Item, item::Potion, item::InBackpack, item::Card, item::Ethereal, item::Targeted, item::SelfTargeted, item::AreaOfEffect,
+            item::Item, item::Potion, item::InBackpack, item::Card, item::Ethereal, item::Targeted, item::AreaOfEffect,
             effects::DealDamage, effects::GainBlock, effects::DiscardCard, effects::DrawCard, effects::GainCard,
             effects::BuffStrength,
-            status::Weak, status::Vulnerable, status::Poison
+            status::Weak, status::Vulnerable, status::Frail, status::Poison
         );
     }
 
@@ -129,10 +126,10 @@ pub fn load_game(ecs: &mut World) {
             ecs, deserializer, data, SerializableResources, SerializableDeck, Name, Position, Renderable,
             creature::Player, creature::Monster, creature::BlocksTile, creature::Viewshed, creature::SufferDamage,
             creature::PerformAction, creature::PickupItem, creature::Attack, creature::Intent, creature::AttackCycle,
-            item::Item, item::Potion, item::InBackpack, item::Card, item::Ethereal, item::Targeted, item::SelfTargeted, item::AreaOfEffect,
+            item::Item, item::Potion, item::InBackpack, item::Card, item::Ethereal, item::Targeted, item::AreaOfEffect,
             effects::DealDamage, effects::GainBlock, effects::DiscardCard, effects::DrawCard, effects::GainCard,
             effects::BuffStrength,
-            status::Weak, status::Vulnerable, status::Poison
+            status::Weak, status::Vulnerable, status::Frail, status::Poison
         );
     }
 
@@ -147,9 +144,7 @@ pub fn load_game(ecs: &mut World) {
         // Load resources
         for (e, r) in (&entities, &resource_helper).join() {
             let mut map = ecs.write_resource::<Map>();
-            let mut gain_queue = ecs.write_resource::<effects::GainCardQueue>();
             *map = r.map.clone();
-            *gain_queue = r.gain_queue.clone();
             map.tile_content = vec![Vec::new(); super::map::MAPSIZE];
             to_delete[0] = Some(e);
         }

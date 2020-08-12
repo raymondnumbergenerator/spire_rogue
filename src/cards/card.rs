@@ -1,6 +1,6 @@
 use specs::prelude::*;
 use specs::saveload::{SimpleMarker, MarkedBuilder};
-use rltk::{RGB, RandomNumberGenerator};
+use rltk::RGB;
 
 use super::super::{
     Name, Renderable, saveload, item

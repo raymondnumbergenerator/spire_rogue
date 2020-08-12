@@ -35,37 +35,7 @@ impl State {
         inventory_sys.run_now(&self.ecs);
         let mut monster_sys = systems::MonsterSystem{};
         monster_sys.run_now(&self.ecs);
-        let mut action_sys = systems::ActionSystem{};
-        action_sys.run_now(&self.ecs);
-
-        // Resolve effects that gain cards
-        {
-            let gain_queue_hand = { self.ecs.fetch_mut::<effects::GainCardQueue>().to_hand.clone() };
-            let gain_queue_discard = { self.ecs.fetch_mut::<effects::GainCardQueue>().to_discard.clone() };
-            {
-                let mut gain_queue = self.ecs.fetch_mut::<effects::GainCardQueue>();
-                gain_queue.to_hand.clear();
-                gain_queue.to_discard.clear();
-            }
-
-            let mut gain_to_hand: Vec<Entity> = Vec::new();
-            let mut gain_to_discard: Vec<Entity> = Vec::new();
-            for card in gain_queue_hand.iter() {
-                gain_to_hand.push(effects::gain_card(&mut self.ecs, *card));
-            }
-            for card in gain_queue_discard.iter() {
-                gain_to_discard.push(effects::gain_card(&mut self.ecs, *card));
-            }
-
-            let mut deck = self.ecs.fetch_mut::<deck::Deck>();
-            for card in gain_to_hand.iter() {
-                deck.gain_to_hand(*card);
-            }
-            for card in gain_to_discard.iter() {
-                deck.gain_card(*card);
-            }
-        }
-
+        systems::action::run(&mut self.ecs);
         let mut damage_sys = systems::DamageSystem{};
         damage_sys.run_now(&self.ecs);
         let mut cleanup_sys = systems::DeadCleanupSystem{};

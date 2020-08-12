@@ -36,9 +36,6 @@ pub struct Targeted {
     pub range: i32
 }
 
-#[derive(Component, Debug, Serialize, Deserialize, Clone)]
-pub struct SelfTargeted {}
-
 #[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct AreaOfEffect {
     pub radius: i32

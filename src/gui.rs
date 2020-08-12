@@ -29,6 +29,7 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
     let combat_stats = ecs.read_storage::<creature::CombatStats>();
     let status_weak = ecs.read_storage::<status::Weak>();
     let status_vulnerable = ecs.read_storage::<status::Vulnerable>();
+    let status_frail = ecs.read_storage::<status::Frail>();
     let status_poison = ecs.read_storage::<status::Poison>();
 
     let attack_cycles = ecs.read_storage::<creature::AttackCycle>();
@@ -62,30 +63,33 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
         let idx = map.xy_idx(position.x, position.y);
         if position.x == mouse_pos.0 && position.y == mouse_pos.1 && map.visible_tiles[idx] {
             match ac.attacks[ac.cycle] {
-                monsters::Attacks::NormalAttack{name: _, amount, range} => {
+                monsters::Attacks::NormalAttack{name: _, range, amount} => {
                     let damage = amount + stat.strength;
                     tooltip.push(format!("{}:A{}", range, damage));
                 }
-                monsters::Attacks::GainBlock{name: _, amount, range: _} => {
+                monsters::Attacks::GainBlock{name: _, range: _, amount} => {
                     let block = amount + stat.dexterity;
                     tooltip.push(format!("{}", block));
                 }
-                monsters::Attacks::AttackAndBlock{name: _, damage_amount, block_amount, range} => {
+                monsters::Attacks::AttackAndBlock{name: _, range, damage_amount, block_amount} => {
                     let damage = damage_amount + stat.strength;
                     let block = block_amount + stat.dexterity;
                     tooltip.push(format!("{}:A{},B{}", range, damage, block));
                 }
-                monsters::Attacks::ApplyWeak{name: _, turns, range} => {
+                monsters::Attacks::ApplyWeak{name: _, range, turns} => {
                     tooltip.push(format!("{}:W{}", range, turns));
                 }
-                monsters::Attacks::BuffStrength{name: _, amount, range: _} => {
+                monsters::Attacks::ApplyFrail{name: _, range, turns} => {
+                    tooltip.push(format!("{}:F{}", range, turns));
+                }
+                monsters::Attacks::BuffStrength{name: _, range:_, amount} => {
                     tooltip.push(format!("S{}", amount));
                 }
-                monsters::Attacks::BlockAndBuffStrength{name: _, block_amount, buff_amount, range: _} => {
+                monsters::Attacks::BlockAndBuffStrength{name: _, range:_, block_amount, buff_amount} => {
                     let block = block_amount + stat.dexterity;
                     tooltip.push(format!("B{},S{}", block, buff_amount));
                 }
-                monsters::Attacks::AttackAndGiveCard{name: _, amount, card: _, number: _, range} => {
+                monsters::Attacks::AttackAndGiveCard{name: _, range, amount, card: _, number: _} => {
                     let damage = amount + stat.strength;
                     tooltip.push(format!("{}:A{},#", range, damage));
                 }
@@ -95,11 +99,13 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
     }
 
     // Push status effects to tooltips
-    for (position, _, weak, vulnerable, poison) in (&positions, &creatures, status_weak.maybe(), status_vulnerable.maybe(), status_poison.maybe()).join() {
+    for (position, _, weak, vulnerable, frail, poison) in (&positions, &creatures, status_weak.maybe(),
+            status_vulnerable.maybe(), status_frail.maybe(), status_poison.maybe()).join() {
         let idx = map.xy_idx(position.x, position.y);
         if position.x == mouse_pos.0 && position.y == mouse_pos.1 && map.visible_tiles[idx] {
             if let Some(w) = weak { tooltip.push(format!("W{}", w.turns)); }
             if let Some(v) = vulnerable { tooltip.push(format!("V{}", v.turns)); }
+            if let Some(v) = frail { tooltip.push(format!("F{}", v.turns)); }
             if let Some(p) = poison { tooltip.push(format!("P{}", p.turns)); }
         }
     }
@@ -153,6 +159,7 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
             match s.chars().next().unwrap() {
                 'V' => { color = RGB::named(rltk::RED); },
                 'W' => { color = RGB::named(rltk::LIGHTBLUE); },
+                'F' => { color = RGB::named(rltk::TEAL); },
                 'P' => { color = RGB::named(rltk::GREEN); },
                 _ => { color = RGB::named(rltk::CYAN); }
             }
@@ -234,7 +241,8 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
     // Draw player status effects
     let status_weak = ecs.read_storage::<status::Weak>();
     let status_vulnerable = ecs.read_storage::<status::Vulnerable>();
-    for (_, weak, vulnerable) in (&players, status_weak.maybe(), status_vulnerable.maybe()).join() {
+    let status_frail = ecs.read_storage::<status::Frail>();
+    for (_, weak, vulnerable, frail) in (&players, status_weak.maybe(), status_vulnerable.maybe(), status_frail.maybe()).join() {
         if let Some(w) = weak {
             let weak_text = format!("W{}", w.turns);
             ctx.print_color(x, MAPHEIGHT, RGB::named(rltk::LIGHTBLUE), RGB::named(rltk::BLACK), &weak_text);
@@ -243,6 +251,10 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
         if let Some(v) = vulnerable {
             let vulnerable_text = format!("V{}", v.turns);
             ctx.print_color(x, MAPHEIGHT, RGB::named(rltk::RED), RGB::named(rltk::BLACK), &vulnerable_text);
+        }
+        if let Some(f) = frail {
+            let frail_text = format!("F{}", f.turns);
+            ctx.print_color(x, MAPHEIGHT, RGB::named(rltk::TEAL), RGB::named(rltk::BLACK), &frail_text);
         }
     }
 

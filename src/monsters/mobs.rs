@@ -117,7 +117,38 @@ fn acid_slime_m(ecs: &mut World, x: i32, y: i32) {
         .add_weighted(attack_lick, 4)
         .add_weighted(attack_tackle, 3);
 
-    build_monster(ecs, "Acid Slime", x, y, rltk::to_cp437('S'), RGB::named(rltk::RED))
+    build_monster(ecs, "Acid Slime", x, y, rltk::to_cp437('S'), RGB::named(rltk::GREEN))
+        .with(creature::CombatStats{ max_hp: hp, hp: hp, block: 0,
+            base_strength: 0, strength: 0,
+            base_dexterity: 0, dexterity: 0
+        })
+        .with(attack_cycle)
+        .with(creature::Intent{ intent, used: false })
+        .build();
+}
+
+fn spike_slime_m(ecs: &mut World, x: i32, y: i32) {
+    let hp = ecs.write_resource::<RandomNumberGenerator>().range(28, 32);
+
+    let attack_flame_tackle = monsters::Attacks::AttackAndGiveCard{
+        name: "Corrosive Spit".to_string(),
+        amount: 8,
+        card: effects::GainableCard::Slimed,
+        number: 1,
+        range: 1
+    };
+    let attack_lick = monsters::Attacks::ApplyFrail{
+        name: "Lick".to_string(),
+        turns: 1,
+        range: 1
+    };
+    let intent = monsters::build_attack(ecs, attack_flame_tackle.clone()).build();
+
+    let attack_cycle = creature::AttackCycle::new_weighted()
+        .add_weighted(attack_flame_tackle, 3)
+        .add_weighted(attack_lick, 7);
+
+    build_monster(ecs, "Spike Slime", x, y, rltk::to_cp437('S'), RGB::named(rltk::TEAL))
         .with(creature::CombatStats{ max_hp: hp, hp: hp, block: 0,
             base_strength: 0, strength: 0,
             base_dexterity: 0, dexterity: 0
@@ -146,7 +177,7 @@ fn acid_slime_s(ecs: &mut World, x: i32, y: i32) {
         .add_sequential(attack_tackle)
         .add_sequential(attack_lick);
 
-    build_monster(ecs, "Acid Slime", x, y, rltk::to_cp437('s'), RGB::named(rltk::RED))
+    build_monster(ecs, "Acid Slime", x, y, rltk::to_cp437('s'), RGB::named(rltk::GREEN))
         .with(creature::CombatStats{ max_hp: hp, hp: hp, block: 0,
             base_strength: 0, strength: 0,
             base_dexterity: 0, dexterity: 0
@@ -160,13 +191,14 @@ pub fn random_monster(ecs: &mut World, x: i32, y: i32) {
     let roll: i32;
     {
         let mut rng = ecs.write_resource::<RandomNumberGenerator>();
-        roll = rng.roll_dice(4, 5);
+        roll = rng.roll_dice(1, 5);
     }
 
     match roll {
         1 => { cultist(ecs, x, y) }
         2 => { jaw_worm(ecs, x, y) }
         3 => { acid_slime_s(ecs, x, y) }
-        _ => { acid_slime_m(ecs, x, y) }
+        4 => { acid_slime_m(ecs, x, y) }
+        _ => { spike_slime_m(ecs, x, y) }
     }
 }

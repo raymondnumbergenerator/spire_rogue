@@ -54,7 +54,7 @@ impl<'a> System<'a> for MonsterSystem {
             }
         }
 
-        for (ent, mut viewshed, mut pos, mut ac, mut intent, _) in (&entities, &mut viewshed, &mut positions, &mut attack_cycles, &mut monster_intents, &monster).join() {
+        for (ent, mut viewshed, mut pos, ac, mut intent, _) in (&entities, &mut viewshed, &mut positions, &mut attack_cycles, &mut monster_intents, &monster).join() {
             let distance = rltk::DistanceAlg::Pythagoras.distance2d(Point::new(pos.x, pos.y), *player_pos);
             let range = match targeted.get(intent.intent) {
                 Some(r) => { r.range }

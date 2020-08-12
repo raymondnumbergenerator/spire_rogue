@@ -48,12 +48,6 @@ pub fn gain_card(ecs: &mut World, card: GainableCard) -> Entity {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
-pub struct GainCardQueue {
-    pub to_hand: Vec<GainableCard>,
-    pub to_discard: Vec<GainableCard>,
-}
-
 #[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct GainCard {
     pub card: GainableCard,
