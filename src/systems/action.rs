@@ -5,6 +5,30 @@ use super::super::{
     effects, status
 };
 
+macro_rules! apply_status {
+    ($status_storage:expr, $status_effect:ident,
+        $entity:expr, $log:expr, $names:expr, $targets:expr, $intent:expr) => {
+        let mut affected_targets = Vec::new();
+        if let Some(action) = $status_storage.get($intent.action) {
+            for target in $targets.iter() {
+                affected_targets.push((*target, action.turns));
+                $log.push(format!("{} applies {} to {} for {} turns.",
+                    $names.get($entity).unwrap().name,
+                    stringify!($status_effect),
+                    $names.get(*target).unwrap().name,
+                    action.turns))
+            }
+        }
+        for target in affected_targets.iter() {
+            if let Some(already_affected) = $status_storage.get_mut(target.0) {
+                already_affected.turns += target.1;
+            } else {
+                $status_storage.insert(target.0, status::$status_effect{ turns: target.1 }).expect("Unable to insert status");
+            }
+        }
+    }
+}
+
 pub fn run(ecs: &mut World) {
     let mut gain_to_hand_queue: Vec<effects::GainableCard> = Vec::new();
     let mut gain_to_discard_queue: Vec<effects::GainableCard> = Vec::new();
@@ -34,26 +58,22 @@ pub fn run(ecs: &mut World) {
                 Some(target) => {
                     let creatures = ecs.read_storage::<creature::Creature>();
                     let aoe = ecs.read_storage::<item::AreaOfEffect>();
-                    let area_effect = aoe.get(intent.action);
-                    match area_effect {
-                        None => {
-                            let idx = map.xy_idx(target.x, target.y);
+                    if let Some(area_effect) = aoe.get(intent.action) {
+                        let mut aoe_tiles = rltk::field_of_view(target, area_effect.radius, &*map);
+                        aoe_tiles.retain(|p| p.x > 0 && p.x < map.width-1 && p.y > 0 && p.y < map.height-1 );
+                        for tile_idx in aoe_tiles.iter() {
+                            let idx = map.xy_idx(tile_idx.x, tile_idx.y);
                             for creature in map.tile_content[idx].iter() {
                                 if let Some(_) = creatures.get(*creature) {
                                     if *creature != entity { targets.push(*creature); }
                                 }
                             }
                         }
-                        Some(area_effect) => {
-                            let mut aoe_tiles = rltk::field_of_view(target, area_effect.radius, &*map);
-                            aoe_tiles.retain(|p| p.x > 0 && p.x < map.width-1 && p.y > 0 && p.y < map.height-1 );
-                            for tile_idx in aoe_tiles.iter() {
-                                let idx = map.xy_idx(tile_idx.x, tile_idx.y);
-                                for creature in map.tile_content[idx].iter() {
-                                    if let Some(_) = creatures.get(*creature) {
-                                        if *creature != entity { targets.push(*creature); }
-                                    }
-                                }
+                    } else {
+                        let idx = map.xy_idx(target.x, target.y);
+                        for creature in map.tile_content[idx].iter() {
+                            if let Some(_) = creatures.get(*creature) {
+                                if *creature != entity { targets.push(*creature); }
                             }
                         }
                     }
@@ -126,91 +146,11 @@ pub fn run(ecs: &mut World) {
                 }
             }
 
-            // Apply weak to affected targets
-            {
-                let mut affected_targets = Vec::new();
-                if let Some(action) = status_weak.get(intent.action) {
-                    for target in targets.iter() {
-                        affected_targets.push((*target, action.turns));
-                        log.push(format!("{} applies Weak to {} for {} turns.",
-                            names.get(entity).unwrap().name,
-                            names.get(*target).unwrap().name,
-                            action.turns))
-                    }
-                }
-                for target in affected_targets.iter() {
-                    if let Some(already_affected) = status_weak.get_mut(target.0) {
-                        already_affected.turns += target.1;
-                    } else {
-                        status_weak.insert(target.0, status::Weak{ turns: target.1 }).expect("Unable to insert status");
-                    }
-                }
-            }
-
-            // Apply vulnerable to affected targets
-            {
-                let mut affected_targets = Vec::new();
-                if let Some(action) = status_vulnerable.get(intent.action) {
-                    for target in targets.iter() {
-                        affected_targets.push((*target, action.turns));
-                        log.push(format!("{} applies Vulnerable to {} for {} turns.",
-                            names.get(entity).unwrap().name,
-                            names.get(*target).unwrap().name,
-                            action.turns))
-                    }
-                }
-                for target in affected_targets.iter() {
-                    if let Some(already_affected) = status_vulnerable.get_mut(target.0) {
-                        already_affected.turns += target.1;
-                    } else {
-                        status_vulnerable.insert(target.0, status::Vulnerable{ turns: target.1 }).expect("Unable to insert status");
-                    }
-                }
-            }
-
-            // Apply frail to affected targets
-            {
-                let mut affected_targets = Vec::new();
-                if let Some(action) = status_frail.get(intent.action) {
-                    for target in targets.iter() {
-                        affected_targets.push((*target, action.turns));
-                        log.push(format!("{} applies Frail to {} for {} turns.",
-                            names.get(entity).unwrap().name,
-                            names.get(*target).unwrap().name,
-                            action.turns))
-                    }
-                }
-                for target in affected_targets.iter() {
-                    if let Some(already_affected) = status_frail.get_mut(target.0) {
-                        already_affected.turns += target.1;
-                    } else {
-                        status_frail.insert(target.0, status::Frail{ turns: target.1 }).expect("Unable to insert status");
-                    }
-                }
-            }
-
-            // Apply poison to affected targets
-            {
-                let mut affected_targets = Vec::new();
-                if let Some(action) = status_poison.get(intent.action) {
-                    for target in targets.iter() {
-                        affected_targets.push((*target, action.turns));
-                        if entity == *player_entity {
-                            log.push(format!("{} applies poison to {} for {} turns.",
-                                names.get(entity).unwrap().name,
-                                names.get(*target).unwrap().name,
-                                action.turns))
-                        }
-                    }
-                }
-                for target in affected_targets.iter() {
-                    if let Some(already_affected) = status_poison.get_mut(target.0) {
-                        already_affected.turns += target.1;
-                    } else {
-                        status_poison.insert(target.0, status::Poison{ turns: target.1 }).expect("Unable to insert status");
-                    }
-                }
-            }
+            // Apply status effects to affected targets
+            apply_status!(status_weak, Weak, entity, log, names, targets, intent);
+            apply_status!(status_vulnerable, Vulnerable, entity, log, names, targets, intent);
+            apply_status!(status_frail, Frail, entity, log, names, targets, intent);
+            apply_status!(status_poison, Poison, entity, log, names, targets, intent);
 
             // Draw cards
             {
@@ -285,5 +225,4 @@ pub fn run(ecs: &mut World) {
     for card in gain_to_discard.iter() {
         deck.gain_card(*card);
     }
-
 }

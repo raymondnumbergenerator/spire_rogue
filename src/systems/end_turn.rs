@@ -3,6 +3,31 @@ use super::super::{Name, Gamelog, RunState, creature, status};
 
 pub struct EndTurnSystem {}
 
+macro_rules! decay_status {
+    ($status_storage:expr, $status_name:expr, $log:expr, $player_entity:expr, $player_turn:expr,
+        $entities:expr, $names:expr, $monsters:expr) => (
+        let mut to_remove = Vec::new();
+        for (ent, mut status) in (&$entities, &mut $status_storage).join() {
+            if $player_turn {
+                if ent == *$player_entity { status.turns -= 1; }
+            } else {
+                if let Some(_) = $monsters.get(ent) {
+                    status.turns -= 1;
+                }
+            }
+            if status.turns < 1 {
+                to_remove.push(ent);
+            }
+        }
+        for ent in to_remove {
+            if let Some(ent_name) = $names.get(ent) {
+                $log.push(format!("{} wears off for {}.", $status_name, ent_name.name.to_string()));
+            }
+            $status_storage.remove(ent);
+        }
+    )
+}
+
 impl<'a> System<'a> for EndTurnSystem {
     type SystemData = (
         Entities<'a>,
@@ -28,74 +53,10 @@ impl<'a> System<'a> for EndTurnSystem {
             _ => { return; }
         }
 
-        // Decrement weakness turn counter
-        {
-            let mut to_remove = Vec::new();
-            for (ent, mut weak) in (&entities, &mut status_weak).join() {
-                if player_turn {
-                    if ent == *player_entity { weak.turns -= 1; }
-                } else {
-                    if let Some(_) = monsters.get(ent) {
-                        weak.turns -= 1;
-                    }
-                }
-                if weak.turns < 1 {
-                    to_remove.push(ent);
-                }
-            }
-            for ent in to_remove {
-                if let Some(ent_name) = names.get(ent) {
-                    log.push(format!("Weak wears off for {}.", ent_name.name.to_string()));
-                }
-                status_weak.remove(ent);
-            }
-        }
-
-        // Decrement vulnerable turn counter
-        {
-            let mut to_remove = Vec::new();
-            for (ent, mut vulnerable) in (&entities, &mut status_vulnerable).join() {
-                if player_turn {
-                    if ent == *player_entity { vulnerable.turns -= 1; }
-                } else {
-                    if let Some(_) = monsters.get(ent) {
-                        vulnerable.turns -= 1;
-                    }
-                }
-                if vulnerable.turns < 1 {
-                    to_remove.push(ent);
-                }
-            }
-            for ent in to_remove {
-                if let Some(ent_name) = names.get(ent) {
-                    log.push(format!("Vulnerable wears off for {}.", ent_name.name.to_string()));
-                }
-                status_vulnerable.remove(ent);
-            }
-        }
-
-        // Decrement frail turn counter
-        {
-            let mut to_remove = Vec::new();
-            for (ent, mut frail) in (&entities, &mut status_frail).join() {
-                if player_turn {
-                    if ent == *player_entity { frail.turns -= 1; }
-                } else {
-                    if let Some(_) = monsters.get(ent) {
-                        frail.turns -= 1;
-                    }
-                }
-                if frail.turns < 1 {
-                    to_remove.push(ent);
-                }
-            }
-            for ent in to_remove {
-                if let Some(ent_name) = names.get(ent) {
-                    log.push(format!("Frail wears off for {}.", ent_name.name.to_string()));
-                }
-                status_frail.remove(ent);
-            }
-        }
+        // Decay status effects
+        decay_status!(status_weak, "Weak", log, player_entity, player_turn, entities, names, monsters);
+        decay_status!(status_vulnerable, "Vulnerable", log, player_entity, player_turn, entities, names, monsters);
+        decay_status!(status_frail, "Frail", log, player_entity, player_turn, entities, names, monsters);
 
         // Decay stats
         for (ent, mut stats) in (&entities, &mut combat_stats).join() {

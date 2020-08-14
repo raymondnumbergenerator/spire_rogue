@@ -16,7 +16,7 @@ pub enum RunState {
     MonsterTurn,
     ShowInventory,
     ShowHand { selection: i32 },
-    ShowTargeting { range: i32, radius: i32, item: Entity },
+    ShowTargeting { action:Entity, range: i32, radius: i32 },
     DiscardCard { number: i32 },
     MainMenu { menu_selection: menu::MainMenuSelection },
     SaveGame,
@@ -62,13 +62,13 @@ impl State {
 
                 if let Some(targeted_action) = self.ecs.read_storage::<item::Targeted>().get(action) {
                     newrunstate = RunState::ShowTargeting{
+                        action,
                         range: targeted_action.range, 
-                        radius: radius,
-                        item: action
+                        radius
                     };
                 } else {
                     let mut intent = self.ecs.write_storage::<creature::PerformAction>();
-                    intent.insert(*self.ecs.fetch::<Entity>(), creature::PerformAction{ action: action, target: None }).expect("Unable to insert creature::PerformAction");
+                    intent.insert(*self.ecs.fetch::<Entity>(), creature::PerformAction{ action, target: None }).expect("Unable to insert creature::PerformAction");
 
                     // Check if action requires discard
                     if let Some(require_discard) = self.ecs.read_storage::<effects::DiscardCard>().get(action) {
@@ -282,7 +282,7 @@ impl GameState for State {
                 let result = gui::pick_card(&mut self.ecs, selection);
                 newrunstate = self.take_action(newrunstate, result);
             }
-            RunState::ShowTargeting{range, radius, item} => {
+            RunState::ShowTargeting{action, range, radius} => {
                 let result = gui::ranged_target(&self.ecs, ctx, range, radius);
                 match result.0 {
                     gui::ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
@@ -290,9 +290,10 @@ impl GameState for State {
                     gui::ItemMenuResult::Selected => {
                         {
                             let mut intent = self.ecs.write_storage::<creature::PerformAction>();
-                            intent.insert(*self.ecs.fetch::<Entity>(), creature::PerformAction{ action: item, target: result.1 }).expect("Unable to insert creature::PerformAction");
+                            intent.insert(*self.ecs.fetch::<Entity>(), creature::PerformAction{ action, target: result.1 }).expect("Unable to insert creature::PerformAction");
+
                             // Check if action requires discard
-                            if let Some(require_discard) = self.ecs.read_storage::<effects::DiscardCard>().get(item) {
+                            if let Some(require_discard) = self.ecs.read_storage::<effects::DiscardCard>().get(action) {
                                 newrunstate = RunState::DiscardCard{ number: require_discard.number };
                             } else {
                                 newrunstate = RunState::PlayerTurn;

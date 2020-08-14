@@ -111,7 +111,6 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
         }        
     }
 
-
     if !tooltip.is_empty() {
         let mut width: i32 = 0;
         for s in tooltip.iter() {
