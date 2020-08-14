@@ -85,6 +85,7 @@ fn main() -> rltk::BError {
     gs.ecs.register::<effects::DrawCard>();
     gs.ecs.register::<effects::GainCard>();
     gs.ecs.register::<effects::BuffStrength>();
+    gs.ecs.register::<effects::BuffDexterity>();
 
     gs.ecs.register::<item::Item>();
     gs.ecs.register::<item::Potion>();

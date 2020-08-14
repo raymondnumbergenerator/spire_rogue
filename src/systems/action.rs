@@ -29,6 +29,22 @@ macro_rules! apply_status {
     }
 }
 
+macro_rules! apply_buff {
+    ($buff_type:ty, $buff_stat:ident, $ecs:expr, $entity:expr, $log:expr, $names:expr, $combat_stats:expr, $intent:expr) => {
+        let buff = $ecs.read_storage::<$buff_type>();
+        if let Some(action) = buff.get($intent.action) {
+            if let Some(stats) = $combat_stats.get_mut($entity) {
+                stats.$buff_stat += action.amount;
+                $log.push(format!("{} uses {} and gains {} {}.",
+                    $names.get($entity).unwrap().name,
+                    $names.get($intent.action).unwrap().name,
+                    action.amount,
+                    stringify!($buff_stat)))
+            }
+        }
+    }
+}
+
 pub fn run(ecs: &mut World) {
     let mut gain_to_hand_queue: Vec<effects::GainableCard> = Vec::new();
     let mut gain_to_discard_queue: Vec<effects::GainableCard> = Vec::new();
@@ -132,19 +148,9 @@ pub fn run(ecs: &mut World) {
                 }
             }
 
-            // Apply strength buff to caster
-            {
-                let effect_strength = ecs.read_storage::<effects::BuffStrength>();
-                if let Some(action) = effect_strength.get(intent.action) {
-                    if let Some(stats) = combat_stats.get_mut(entity) {
-                        stats.strength += action.amount;
-                        log.push(format!("{} uses {} and gains {} strength.",
-                            names.get(entity).unwrap().name,
-                            names.get(intent.action).unwrap().name,
-                            action.amount))
-                    }
-                }
-            }
+            // Apply stat buffs to caster
+            apply_buff!(effects::BuffStrength, strength, ecs, entity, log, names, combat_stats, intent);
+            apply_buff!(effects::BuffDexterity, dexterity, ecs, entity, log, names, combat_stats, intent);
 
             // Apply status effects to affected targets
             apply_status!(status_weak, Weak, entity, log, names, targets, intent);

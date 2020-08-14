@@ -24,44 +24,44 @@ impl Attacks {
             .with(creature::Attack{});
     
         match self {
-            Attacks::NormalAttack{name, range, amount } => {
+            Attacks::NormalAttack{name, range, amount} => {
                 attack = attack.with(Name{ name: name.to_string() })
                     .with(item::Targeted{ range })
                     .with(effects::DealDamage{ amount });
             }
-            Attacks::GainBlock{name, range, amount } => {
+            Attacks::GainBlock{name, range, amount} => {
                 attack = attack.with(Name{ name: name.to_string() })
                     .with(item::Targeted{ range })
                     .with(effects::GainBlock{ amount });
             }
-            Attacks::AttackAndBlock{name, range, damage_amount, block_amount } => {
+            Attacks::AttackAndBlock{name, range, damage_amount, block_amount} => {
                 attack = attack.with(Name{ name: name.to_string() })
                     .with(item::Targeted{ range })
                     .with(effects::DealDamage{ amount: damage_amount })
                     .with(effects::GainBlock{ amount: block_amount });
             }
-            Attacks::ApplyWeak{name, range, turns } => {
+            Attacks::ApplyWeak{name, range, turns} => {
                 attack = attack.with(Name{ name: name.to_string() })
                     .with(item::Targeted{ range })
                     .with(status::Weak{ turns });
             }
-            Attacks::ApplyFrail{name, range, turns } => {
+            Attacks::ApplyFrail{name, range, turns} => {
                 attack = attack.with(Name{ name: name.to_string() })
                     .with(item::Targeted{ range })
                     .with(status::Frail{ turns });
             }
-            Attacks::BuffStrength{name, range, amount } => {
+            Attacks::BuffStrength{name, range, amount} => {
                 attack = attack.with(Name{ name: name.to_string() })
                     .with(item::Targeted{ range })
                     .with(effects::BuffStrength{ amount });
             }
-            Attacks::BlockAndBuffStrength{name, range, block_amount, buff_amount } => {
+            Attacks::BlockAndBuffStrength{name, range, block_amount, buff_amount} => {
                 attack = attack.with(Name{ name: name.to_string() })
                     .with(item::Targeted{ range })
                     .with(effects::GainBlock{ amount: block_amount })
                     .with(effects::BuffStrength{ amount: buff_amount });
             }
-            Attacks::AttackAndGiveCard{name, range, amount, card, number } => {
+            Attacks::AttackAndGiveCard{name, range, amount, card, number} => {
                 attack = attack.with(Name{ name: name.to_string() })
                     .with(item::Targeted{ range })
                     .with(effects::DealDamage{ amount })

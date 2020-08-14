@@ -117,6 +117,13 @@ fn dash(ecs: &mut World, x: i32, y: i32) -> Entity {
         .build()
 }
 
+fn footwork(ecs: &mut World, x: i32, y: i32) -> Entity {
+    build_card(ecs, "Footwork", 1, Rarity::Uncommon)
+        .with(effects::BuffDexterity{ amount: 4 })
+        .with(Position{ x, y })
+        .build()
+}
+
 fn leg_sweep(ecs: &mut World, x: i32, y: i32) -> Entity {
     build_card(ecs, "Leg Sweep", 2, Rarity::Uncommon)
         .with(item::Targeted{ range: 1 })
@@ -130,7 +137,7 @@ pub fn random_card(ecs: &mut World, x: i32, y: i32) {
     let roll: i32;
     {
         let mut rng = ecs.write_resource::<RandomNumberGenerator>();
-        roll = rng.roll_dice(1, 10);
+        roll = rng.roll_dice(1, 11);
     }
 
     match roll {
@@ -143,6 +150,7 @@ pub fn random_card(ecs: &mut World, x: i32, y: i32) {
         7 => { quick_slash(ecs, x, y); }
         8 => { slice(ecs, x, y); }
         9 => { dash(ecs, x, y); }
+        10 => { footwork(ecs, x, y); }
         _ => { leg_sweep(ecs, x, y); }
     }
 }

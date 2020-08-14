@@ -97,7 +97,7 @@ pub fn save_game(ecs: &mut World) {
             creature::PerformAction, creature::PickupItem, creature::Attack, creature::Intent, creature::AttackCycle,
             item::Item, item::Potion, item::InBackpack, item::Card, item::Ethereal, item::Targeted, item::AreaOfEffect,
             effects::DealDamage, effects::GainBlock, effects::DiscardCard, effects::DrawCard, effects::GainCard,
-            effects::BuffStrength,
+            effects::BuffStrength, effects::BuffDexterity,
             status::Weak, status::Vulnerable, status::Frail, status::Poison
         );
     }
@@ -128,7 +128,7 @@ pub fn load_game(ecs: &mut World) {
             creature::PerformAction, creature::PickupItem, creature::Attack, creature::Intent, creature::AttackCycle,
             item::Item, item::Potion, item::InBackpack, item::Card, item::Ethereal, item::Targeted, item::AreaOfEffect,
             effects::DealDamage, effects::GainBlock, effects::DiscardCard, effects::DrawCard, effects::GainCard,
-            effects::BuffStrength,
+            effects::BuffStrength, effects::BuffDexterity,
             status::Weak, status::Vulnerable, status::Frail, status::Poison
         );
     }

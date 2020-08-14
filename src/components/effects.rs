@@ -60,3 +60,8 @@ pub struct GainCard {
 pub struct BuffStrength {
     pub amount: i32
 }
+
+#[derive(Component, Debug, ConvertSaveload, Clone)]
+pub struct BuffDexterity {
+    pub amount: i32
+}
