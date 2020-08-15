@@ -5,7 +5,7 @@ use rltk::{RGB, RandomNumberGenerator};
 use super::{
     Name, Position, Renderable, saveload,
     creature, effects, cards, item, monsters,
-    util::rect::Rect, map::MAPWIDTH,
+    util::RandomTable, util::Rect, map::MAPWIDTH,
 };
 
 pub fn player(ecs: &mut World, x: i32, y: i32) -> Entity {
@@ -97,30 +97,65 @@ pub fn random_potion(ecs: &mut World, x: i32, y: i32) {
     }
 }
 
+fn room_table() -> RandomTable<monsters::Encounters> {
+    RandomTable::new()
+        .add(monsters::Encounters::Cultist, 1)
+        .add(monsters::Encounters::JawWorm, 1)
+        .add(monsters::Encounters::Louses, 1)
+        .add(monsters::Encounters::SmallSlimes, 1)
+}
+
 /// Fills a room with monsters and items
 pub fn spawn_room(ecs: &mut World, room: &Rect) {
-    let mut monster_spawn_points: Vec<usize> = Vec::new();
+    // Pick an encounter
+    let encounter: monsters::Encounters;
+    {
+        let encounter_table = room_table();
+        let mut rng = ecs.write_resource::<RandomNumberGenerator>();
+        encounter = encounter_table.roll(&mut rng).unwrap();
+    }
+    {
+        let entry = encounter.spawn(ecs);
+        let mut rng = ecs.write_resource::<RandomNumberGenerator>();
+
+        // Decide spawn points
+        let mut spawn_points: Vec<usize> = Vec::new();
+        for _ in 0 .. entry.len() {
+            let mut added = false;
+            let mut tries = 0;
+            while !added && tries < 20 {
+                let x = (room.x1 + rng.roll_dice(1, i32::abs(room.x2 - room.x1))) as usize;
+                let y = (room.y1 + rng.roll_dice(1, i32::abs(room.y2 - room.y1))) as usize;
+                let idx = (y * MAPWIDTH) + x;
+                if !spawn_points.contains(&idx) {
+                    spawn_points.push(idx);
+                    added = true;
+                } else {
+                    tries += 1;
+                }
+            }
+        }
+
+        // Set spawn points
+        let mut positions = ecs.write_storage::<Position>();
+        for (i, idx) in spawn_points.iter().enumerate() {
+            let x = (*idx % MAPWIDTH) as i32;
+            let y = (*idx / MAPWIDTH) as i32;
+            let ent = entry[i];
+
+            if let Some(pos) = positions.get_mut(ent) {
+                pos.x = x;
+                pos.y = y;
+            }
+        }
+    }
+
     let mut item_spawn_points: Vec<usize> = Vec::new();
     let mut card_spawn_points: Vec<usize> = Vec::new();
     {
         let mut rng = ecs.write_resource::<RandomNumberGenerator>();
-        let num_monsters = rng.range(0, 3);
-        let num_items = rng.range(0, 2);
-        let num_cards = rng.range(0, 4);
-
-        // Decide monster spawn points
-        for _ in 0 .. num_monsters {
-            let mut added = false;
-            while !added {
-                let x = (room.x1 + rng.roll_dice(1, i32::abs(room.x2 - room.x1))) as usize;
-                let y = (room.y1 + rng.roll_dice(1, i32::abs(room.y2 - room.y1))) as usize;
-                let idx = (y * MAPWIDTH) + x;
-                if !monster_spawn_points.contains(&idx) {
-                    monster_spawn_points.push(idx);
-                    added = true;
-                }
-            }
-        }
+        let num_items = rng.range(0, 1);
+        let num_cards = rng.roll_dice(1, 2);
 
         // Decide item spawn points
         for _ in 0 .. num_items {
@@ -149,13 +184,6 @@ pub fn spawn_room(ecs: &mut World, room: &Rect) {
                 }
             }
         }
-    }
-
-    // Spawn monsters
-    for idx in monster_spawn_points.iter() {
-        let x = *idx % MAPWIDTH;
-        let y = *idx / MAPWIDTH;
-        monsters::random_monster(ecs, x as i32, y as i32)
     }
 
     // Spawn items

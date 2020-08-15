@@ -1,5 +1,6 @@
-pub mod attacks;
-pub mod mobs;
+mod attacks;
+mod encounters;
+mod mobs;
 
 pub use attacks::Attacks;
-pub use mobs::random_monster;
+pub use encounters::Encounters;

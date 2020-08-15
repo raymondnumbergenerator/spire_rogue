@@ -11,7 +11,7 @@ use std::path::Path;
 const SAVE_PATH: &str = "./save.json";
 
 use super::{
-    util::entityvec::EntityVec,
+    util::EntityVec,
     Name, Position, Renderable, Map, deck,
     creature, effects, item, status
 };

@@ -132,7 +132,7 @@ impl AttackCycle {
                 let mut roll = rng.roll_dice(1, self.total_weight) - 1;
                 let mut next_cycle = 0;
 
-                while roll > 0 {
+                while roll >= 0 {
                     if roll < w[next_cycle] {
                         self.cycle = next_cycle;
                         return;
@@ -142,7 +142,7 @@ impl AttackCycle {
                 }
             }
             None => {
-                self.cycle = (self.cycle + 1) & self.attacks.len();
+                self.cycle = (self.cycle + 1) % self.attacks.len();
             }
         }
     }

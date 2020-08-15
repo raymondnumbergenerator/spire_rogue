@@ -2,7 +2,7 @@ use specs::prelude::*;
 use serde::{Serialize, Deserialize};
 use rltk::{RGB, Rltk, RandomNumberGenerator, Algorithm2D, BaseMap, Point};
 
-use super::{util::rect::Rect, util::line::line};
+use super::{util::Rect, util::line};
 use super::{WINDOWWIDTH, WINDOWHEIGHT, gui::GUISIZE};
 
 pub const MAPWIDTH: usize = WINDOWWIDTH;
