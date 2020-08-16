@@ -267,3 +267,133 @@ pub fn spike_slime_s(ecs: &mut World, x: i32, y: i32) -> Entity {
         .with(creature::Intent{ intent, used: false })
         .build()
 }
+
+pub fn mad_gremlin(ecs: &mut World, x: i32, y: i32) -> Entity {
+    let hp = ecs.write_resource::<RandomNumberGenerator>().range(20, 25);
+
+    let attack_scratch = monsters::Attacks::NormalAttack{
+        name: "Scratch".to_string(),
+        amount: 4,
+        range: 1
+    };
+    let intent = attack_scratch.clone().to_attack(ecs);
+
+    let attack_cycle = creature::AttackCycle::new_sequential()
+        .add_sequential(attack_scratch);
+
+    build_monster(ecs, "Mad Gremlin", x, y, rltk::to_cp437('g'), RGB::named(rltk::RED))
+        .with(creature::CombatStats{ max_hp: hp, hp: hp, block: 0,
+            base_strength: 0, strength: 0,
+            base_dexterity: 0, dexterity: 0
+        })
+        .with(attack_cycle)
+        .with(creature::Intent{ intent, used: false })
+        .build()
+}
+
+pub fn sneaky_gremlin(ecs: &mut World, x: i32, y: i32) -> Entity {
+    let hp = ecs.write_resource::<RandomNumberGenerator>().range(10, 15);
+
+    let attack_puncture = monsters::Attacks::NormalAttack{
+        name: "Puncture".to_string(),
+        amount: 4,
+        range: 1
+    };
+    let intent = attack_puncture.clone().to_attack(ecs);
+
+    let attack_cycle = creature::AttackCycle::new_sequential()
+        .add_sequential(attack_puncture);
+
+    build_monster(ecs, "Sneaky Gremlin", x, y, rltk::to_cp437('g'), RGB::named(rltk::PINK))
+        .with(creature::CombatStats{ max_hp: hp, hp: hp, block: 0,
+            base_strength: 0, strength: 0,
+            base_dexterity: 0, dexterity: 0
+        })
+        .with(attack_cycle)
+        .with(creature::Intent{ intent, used: false })
+        .build()
+}
+
+pub fn fat_gremlin(ecs: &mut World, x: i32, y: i32) -> Entity {
+    let hp = ecs.write_resource::<RandomNumberGenerator>().range(13, 18);
+
+    let attack_smash = monsters::Attacks::AttackAndApplyWeak{
+        name: "Smash".to_string(),
+        amount: 4,
+        turns: 1,
+        range: 1
+    };
+    let intent = attack_smash.clone().to_attack(ecs);
+
+    let attack_cycle = creature::AttackCycle::new_sequential()
+        .add_sequential(attack_smash);
+
+    build_monster(ecs, "Fat Gremlin", x, y, rltk::to_cp437('g'), RGB::named(rltk::ORANGE))
+        .with(creature::CombatStats{ max_hp: hp, hp: hp, block: 0,
+            base_strength: 0, strength: 0,
+            base_dexterity: 0, dexterity: 0
+        })
+        .with(attack_cycle)
+        .with(creature::Intent{ intent, used: false })
+        .build()
+}
+
+pub fn gremlin_wizard(ecs: &mut World, x: i32, y: i32) -> Entity {
+    let hp = ecs.write_resource::<RandomNumberGenerator>().range(23, 26);
+
+    let attack_charging = monsters::Attacks::Pass{
+        name: "Charging".to_string(),
+        range: 2
+    };
+    let attack_ultimate_blast = monsters::Attacks::NormalAttack{
+        name: "Ultimate Blast".to_string(),
+        amount: 25,
+        range: 2
+    };
+    let intent = attack_charging.clone().to_attack(ecs);
+
+    let attack_cycle = creature::AttackCycle::new_sequential()
+        .add_sequential(attack_charging.clone())
+        .add_sequential(attack_charging.clone())
+        .add_sequential(attack_charging.clone())
+        .add_sequential(attack_ultimate_blast);
+
+    build_monster(ecs, "Gremlin Wizard", x, y, rltk::to_cp437('G'), RGB::named(rltk::PURPLE))
+        .with(creature::CombatStats{ max_hp: hp, hp: hp, block: 0,
+            base_strength: 0, strength: 0,
+            base_dexterity: 0, dexterity: 0
+        })
+        .with(attack_cycle)
+        .with(creature::Intent{ intent, used: false })
+        .build()
+}
+
+pub fn shield_gremlin(ecs: &mut World, x: i32, y: i32) -> Entity {
+    let hp = ecs.write_resource::<RandomNumberGenerator>().range(12, 16);
+
+    let attack_protect = monsters::Attacks::GainBlock{
+        name: "Protect".to_string(),
+        amount: 7,
+        range: 1
+    };
+    let attack_shield_bash = monsters::Attacks::AttackAndBlock{
+        name: "Shield Bash".to_string(),
+        damage_amount: 6,
+        block_amount: 6,
+        range: 1
+    };
+    let intent = attack_protect.clone().to_attack(ecs);
+
+    let attack_cycle = creature::AttackCycle::new_weighted()
+        .add_weighted(attack_protect, 2)
+        .add_weighted(attack_shield_bash, 1);
+
+    build_monster(ecs, "Shield Gremlin", x, y, rltk::to_cp437('G'), RGB::named(rltk::PINK))
+        .with(creature::CombatStats{ max_hp: hp, hp: hp, block: 0,
+            base_strength: 0, strength: 0,
+            base_dexterity: 0, dexterity: 0
+        })
+        .with(attack_cycle)
+        .with(creature::Intent{ intent, used: false })
+        .build()
+}

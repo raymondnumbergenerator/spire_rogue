@@ -97,20 +97,12 @@ pub fn random_potion(ecs: &mut World, x: i32, y: i32) {
     }
 }
 
-fn room_table() -> RandomTable<monsters::Encounters> {
-    RandomTable::new()
-        .add(monsters::Encounters::Cultist, 1)
-        .add(monsters::Encounters::JawWorm, 1)
-        .add(monsters::Encounters::Louses, 1)
-        .add(monsters::Encounters::SmallSlimes, 1)
-}
-
 /// Fills a room with monsters and items
-pub fn spawn_room(ecs: &mut World, room: &Rect) {
+pub fn spawn_room(ecs: &mut World, room: &Rect, map_depth: i32) {
     // Pick an encounter
     let encounter: monsters::Encounters;
     {
-        let encounter_table = room_table();
+        let encounter_table = monsters::spawn_table(map_depth);
         let mut rng = ecs.write_resource::<RandomNumberGenerator>();
         encounter = encounter_table.roll(&mut rng).unwrap();
     }

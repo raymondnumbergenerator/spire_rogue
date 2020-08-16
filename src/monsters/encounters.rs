@@ -7,8 +7,10 @@ use super::mobs;
 pub enum Encounters {
     Cultist,
     JawWorm,
-    Louses,
-    SmallSlimes
+    Louses(i32),
+    SmallSlimes,
+    LotsOfSlimes(i32),
+    GremlinGang(i32),
 }
 
 impl Encounters {
@@ -21,8 +23,8 @@ impl Encounters {
             Encounters::JawWorm => {
                 spawned.push(mobs::jaw_worm(ecs, 0, 0));
             }
-            Encounters::Louses => {
-                for _ in 0 .. 2 {
+            Encounters::Louses(num) => {
+                for _ in 0 .. num {
                     let roll = { ecs.write_resource::<RandomNumberGenerator>().range(0, 2) };
                     match roll {
                         0 => spawned.push(mobs::red_louse(ecs, 0, 0)),
@@ -40,6 +42,36 @@ impl Encounters {
                 match roll {
                     0 => spawned.push(mobs::acid_slime_s(ecs, 0, 0)),
                     _ => spawned.push(mobs::spike_slime_s(ecs, 0, 0)),
+                }
+            }
+            Encounters::LotsOfSlimes(num) => {
+                for _ in 0 .. num {
+                    let roll = { ecs.write_resource::<RandomNumberGenerator>().range(0, 2) };
+                    match roll {
+                        0 => spawned.push(mobs::acid_slime_s(ecs, 0, 0)),
+                        _ => spawned.push(mobs::spike_slime_s(ecs, 0, 0)),
+                    }
+                }
+            }
+            Encounters::GremlinGang(num) => {
+                for _ in 0 .. num {
+                    let roll = { ecs.write_resource::<RandomNumberGenerator>().range(0, 5) };
+                    match roll {
+                        0 => {
+                            spawned.push(mobs::mad_gremlin(ecs, 0, 0));
+                            spawned.push(mobs::mad_gremlin(ecs, 0, 0));
+                        }
+                        1 => {
+                            spawned.push(mobs::sneaky_gremlin(ecs, 0, 0));
+                            spawned.push(mobs::sneaky_gremlin(ecs, 0, 0));
+                        }
+                        2 => {
+                            spawned.push(mobs::fat_gremlin(ecs, 0, 0));
+                            spawned.push(mobs::fat_gremlin(ecs, 0, 0));
+                        }
+                        3 => spawned.push(mobs::gremlin_wizard(ecs, 0, 0)),
+                        _ => spawned.push(mobs::shield_gremlin(ecs, 0, 0)),
+                    }
                 }
             }
         }

@@ -114,7 +114,7 @@ fn main() -> rltk::BError {
 
     // Spawn mobs
     for room in map.rooms.iter().skip(1) {
-        spawner::spawn_room(&mut gs.ecs, room);
+        spawner::spawn_room(&mut gs.ecs, room, 1);
     }
 
     // Create deck and register <deck::Deck> resource

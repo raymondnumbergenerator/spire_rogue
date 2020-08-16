@@ -74,6 +74,10 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
                 monsters::Attacks::ApplyWeak{name: _, range, turns} => {
                     tooltip.push(format!("{}:W{}", range, turns));
                 }
+                monsters::Attacks::AttackAndApplyWeak{name: _, range, amount, turns} => {
+                    let damage = amount + stat.strength;
+                    tooltip.push(format!("{}:A{}W{}", range, damage, turns));
+                }
                 monsters::Attacks::ApplyFrail{name: _, range, turns} => {
                     tooltip.push(format!("{}:F{}", range, turns));
                 }
@@ -87,6 +91,9 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
                 monsters::Attacks::AttackAndGiveCard{name: _, range, amount, card: _, number: _} => {
                     let damage = amount + stat.strength;
                     tooltip.push(format!("{}:A{},#", range, damage));
+                }
+                monsters::Attacks::Pass{name: _, range: _} => {
+                    tooltip.push("???".to_string());
                 }
             }
             draw_intents = true;

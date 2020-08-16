@@ -130,11 +130,12 @@ impl State {
 
         // Build a new map
         let map: Map;
+        let new_depth;
         {
             // Create map and update <Map> resource
             let mut map_resource = self.ecs.write_resource::<Map>();
-            let current_depth = map_resource.depth;
-            *map_resource = Map::new_map_rooms_and_corridors(current_depth + 1);
+            new_depth = map_resource.depth + 1;
+            *map_resource = Map::new_map_rooms_and_corridors(new_depth);
             map = map_resource.clone();
 
             // Update player position <Point> resource
@@ -159,7 +160,7 @@ impl State {
 
         // Spawn mobs
         for room in map.rooms.iter().skip(1) {
-            spawner::spawn_room(&mut self.ecs, room);
+            spawner::spawn_room(&mut self.ecs, room, new_depth);
         }
 
         let mut log = self.ecs.fetch_mut::<Gamelog>();
