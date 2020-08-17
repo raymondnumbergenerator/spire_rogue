@@ -37,6 +37,8 @@ fn survivor(ecs: &mut World) -> Entity {
 
 fn acrobatics(ecs: &mut World, x: i32, y: i32) -> Entity {
     build_card(ecs, "Acrobatics", 1, Rarity::Common)
+        .with(item::Targeted{ range: 1 })
+        .with(effects::Teleport{})
         .with(effects::DrawCard{ number: 3 })
         .with(effects::DiscardCard{ number: 1 })
         .with(Position{ x, y })
@@ -45,6 +47,8 @@ fn acrobatics(ecs: &mut World, x: i32, y: i32) -> Entity {
 
 fn backflip(ecs: &mut World, x: i32, y: i32) -> Entity {
     build_card(ecs, "Backflip", 1, Rarity::Common)
+        .with(item::Targeted{ range: 1 })
+        .with(effects::Teleport{})
         .with(effects::GainBlock{ amount: 5 })
         .with(effects::DrawCard{ number: 2 })
         .with(Position{ x, y })
@@ -74,10 +78,27 @@ fn cloak_and_dagger(ecs: &mut World, x: i32, y: i32) -> Entity {
         .build()
 }
 
+fn dagger_throw(ecs: &mut World, x: i32, y: i32) -> Entity {
+    build_card(ecs, "Dagger Throw", 1, Rarity::Common)
+        .with(item::Targeted{ range: 2 })
+        .with(effects::DealDamage{ amount: 5 })
+        .with(effects::DrawCard{ number: 1 })
+        .with(effects::DiscardCard{ number: 1 })
+        .with(Position{ x, y })
+        .build()
+}
+
 fn deadly_poison(ecs: &mut World, x: i32, y: i32) -> Entity {
     build_card(ecs, "Deadly Poison", 1, Rarity::Common)
         .with(item::Targeted{ range: 2 })
         .with(status::Poison{ turns: 5 })
+        .with(Position{ x, y })
+        .build()
+}
+
+fn deflect(ecs: &mut World, x: i32, y: i32) -> Entity {
+    build_card(ecs, "Deflect", 0, Rarity::Common)
+        .with(effects::GainBlock{ amount: 4 })
         .with(Position{ x, y })
         .build()
 }
@@ -137,7 +158,7 @@ pub fn random_card(ecs: &mut World, x: i32, y: i32) {
     let roll: i32;
     {
         let mut rng = ecs.write_resource::<RandomNumberGenerator>();
-        roll = rng.roll_dice(1, 11);
+        roll = rng.roll_dice(1, 12);
     }
 
     match roll {
@@ -151,6 +172,8 @@ pub fn random_card(ecs: &mut World, x: i32, y: i32) {
         8 => { slice(ecs, x, y); }
         9 => { dash(ecs, x, y); }
         10 => { footwork(ecs, x, y); }
+        11 => { deflect(ecs, x, y); }
+        12 => { dagger_throw(ecs, x, y); }
         _ => { leg_sweep(ecs, x, y); }
     }
 }

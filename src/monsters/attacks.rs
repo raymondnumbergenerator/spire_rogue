@@ -12,6 +12,7 @@ pub enum Attacks {
     AttackAndBlock{ name: String, range: i32, damage_amount: i32, block_amount: i32 },
     ApplyWeak{ name: String, range: i32, turns: i32 },
     AttackAndApplyWeak{ name: String, range: i32, amount:i32, turns: i32 },
+    AttackAndApplyVulnerable{ name: String, range: i32, amount:i32, turns: i32 },
     ApplyFrail{ name: String, range: i32, turns: i32 },
     BuffStrength{ name: String, range: i32, amount: i32 },
     BlockAndBuffStrength{ name: String, range: i32, block_amount: i32, buff_amount: i32 },
@@ -52,6 +53,12 @@ impl Attacks {
                     .with(item::Targeted{ range })
                     .with(effects::DealDamage{ amount: amount })
                     .with(status::Weak{ turns });
+            }
+            Attacks::AttackAndApplyVulnerable{name, range, amount, turns} => {
+                attack = attack.with(Name{ name: name.to_string() })
+                    .with(item::Targeted{ range })
+                    .with(effects::DealDamage{ amount: amount })
+                    .with(status::Vulnerable{ turns });
             }
             Attacks::ApplyFrail{name, range, turns} => {
                 attack = attack.with(Name{ name: name.to_string() })

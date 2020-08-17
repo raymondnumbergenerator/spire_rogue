@@ -65,3 +65,6 @@ pub struct BuffStrength {
 pub struct BuffDexterity {
     pub amount: i32
 }
+
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct Teleport {}

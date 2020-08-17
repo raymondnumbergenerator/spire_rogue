@@ -148,6 +148,74 @@ pub fn green_louse(ecs: &mut World, x: i32, y: i32) -> Entity {
         .build()
 }
 
+pub fn acid_slime_l(ecs: &mut World, x: i32, y: i32) -> Entity {
+    let hp = ecs.write_resource::<RandomNumberGenerator>().range(65, 70);
+
+    let attack_corrosive_spit = monsters::Attacks::AttackAndGiveCard{
+        name: "Corrosive Spit".to_string(),
+        amount: 11,
+        card: effects::GainableCard::Slimed,
+        number: 2,
+        range: 2
+    };
+    let attack_lick = monsters::Attacks::ApplyWeak{
+        name: "Lick".to_string(),
+        turns: 2,
+        range: 1
+    };
+    let attack_tackle = monsters::Attacks::NormalAttack{
+        name: "Tackle".to_string(),
+        amount: 16,
+        range: 1
+    };
+    let intent = attack_corrosive_spit.clone().to_attack(ecs);
+
+    let attack_cycle = creature::AttackCycle::new_weighted()
+        .add_weighted(attack_corrosive_spit, 3)
+        .add_weighted(attack_lick, 4)
+        .add_weighted(attack_tackle, 3);
+
+    build_monster(ecs, "Acid Slime", x, y, rltk::to_cp437('S'), RGB::named(rltk::GREEN))
+        .with(creature::CombatStats{ max_hp: hp, hp: hp, block: 0,
+            base_strength: 0, strength: 0,
+            base_dexterity: 0, dexterity: 0
+        })
+        .with(attack_cycle)
+        .with(creature::Intent{ intent, used: false })
+        .build()
+}
+
+pub fn spike_slime_l(ecs: &mut World, x: i32, y: i32) -> Entity {
+    let hp = ecs.write_resource::<RandomNumberGenerator>().range(64, 71);
+
+    let attack_flame_tackle = monsters::Attacks::AttackAndGiveCard{
+        name: "Flame Tackle".to_string(),
+        amount: 16,
+        card: effects::GainableCard::Slimed,
+        number: 2,
+        range: 1
+    };
+    let attack_lick = monsters::Attacks::ApplyFrail{
+        name: "Lick".to_string(),
+        turns: 2,
+        range: 1
+    };
+    let intent = attack_flame_tackle.clone().to_attack(ecs);
+
+    let attack_cycle = creature::AttackCycle::new_weighted()
+        .add_weighted(attack_flame_tackle, 3)
+        .add_weighted(attack_lick, 7);
+
+    build_monster(ecs, "Spike Slime", x, y, rltk::to_cp437('S'), RGB::named(rltk::TEAL))
+        .with(creature::CombatStats{ max_hp: hp, hp: hp, block: 0,
+            base_strength: 0, strength: 0,
+            base_dexterity: 0, dexterity: 0
+        })
+        .with(attack_cycle)
+        .with(creature::Intent{ intent, used: false })
+        .build()
+}
+
 pub fn acid_slime_m(ecs: &mut World, x: i32, y: i32) -> Entity {
     let hp = ecs.write_resource::<RandomNumberGenerator>().range(28, 33);
 
@@ -189,7 +257,7 @@ pub fn spike_slime_m(ecs: &mut World, x: i32, y: i32) -> Entity {
     let hp = ecs.write_resource::<RandomNumberGenerator>().range(28, 33);
 
     let attack_flame_tackle = monsters::Attacks::AttackAndGiveCard{
-        name: "Corrosive Spit".to_string(),
+        name: "Flame Tackle".to_string(),
         amount: 8,
         card: effects::GainableCard::Slimed,
         number: 1,
@@ -389,6 +457,66 @@ pub fn shield_gremlin(ecs: &mut World, x: i32, y: i32) -> Entity {
         .add_weighted(attack_shield_bash, 1);
 
     build_monster(ecs, "Shield Gremlin", x, y, rltk::to_cp437('G'), RGB::named(rltk::PINK))
+        .with(creature::CombatStats{ max_hp: hp, hp: hp, block: 0,
+            base_strength: 0, strength: 0,
+            base_dexterity: 0, dexterity: 0
+        })
+        .with(attack_cycle)
+        .with(creature::Intent{ intent, used: false })
+        .build()
+}
+
+pub fn blue_slaver(ecs: &mut World, x: i32, y: i32) -> Entity {
+    let hp = ecs.write_resource::<RandomNumberGenerator>().range(46, 51);
+
+    let attack_stab = monsters::Attacks::NormalAttack{
+        name: "Stab".to_string(),
+        amount: 12,
+        range: 1
+    };
+    let attack_rake = monsters::Attacks::AttackAndApplyWeak{
+        name: "Rake".to_string(),
+        amount: 7,
+        turns: 1,
+        range: 1
+    };
+    let intent = attack_stab.clone().to_attack(ecs);
+
+    let attack_cycle = creature::AttackCycle::new_weighted()
+        .add_weighted(attack_stab, 3)
+        .add_weighted(attack_rake, 2);
+
+    build_monster(ecs, "Slaver", x, y, rltk::to_cp437('l'), RGB::named(rltk::BLUE))
+        .with(creature::CombatStats{ max_hp: hp, hp: hp, block: 0,
+            base_strength: 0, strength: 0,
+            base_dexterity: 0, dexterity: 0
+        })
+        .with(attack_cycle)
+        .with(creature::Intent{ intent, used: false })
+        .build()
+}
+
+pub fn red_slaver(ecs: &mut World, x: i32, y: i32) -> Entity {
+    let hp = ecs.write_resource::<RandomNumberGenerator>().range(46, 51);
+
+    let attack_stab = monsters::Attacks::NormalAttack{
+        name: "Stab".to_string(),
+        amount: 13,
+        range: 1
+    };
+    let attack_scrape = monsters::Attacks::AttackAndApplyVulnerable{
+        name: "Scrape".to_string(),
+        amount: 8,
+        turns: 1,
+        range: 1
+    };
+    let intent = attack_stab.clone().to_attack(ecs);
+
+    let attack_cycle = creature::AttackCycle::new_weighted()
+        .add_weighted(attack_stab, 3)
+        .add_weighted(attack_scrape, 2);
+
+    build_monster(ecs, "Slaver", x, y, rltk::to_cp437('l'), RGB::named(rltk::RED))
         .with(creature::CombatStats{ max_hp: hp, hp: hp, block: 0,
             base_strength: 0, strength: 0,
             base_dexterity: 0, dexterity: 0

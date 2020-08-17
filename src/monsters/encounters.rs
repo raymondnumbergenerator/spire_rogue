@@ -5,23 +5,29 @@ use super::mobs;
 
 #[derive(Copy, Clone)]
 pub enum Encounters {
-    Cultist,
-    JawWorm,
+    Cultist(i32),
+    JawWorm(i32),
     Louses(i32),
-    SmallSlimes,
-    LotsOfSlimes(i32),
+    SlimePair,
+    SmallSlimes(i32),
+    LargeSlime,
     GremlinGang(i32),
+    Slaver(i32),
 }
 
 impl Encounters {
     pub fn spawn(self, ecs: &mut World) -> Vec<Entity> {
         let mut spawned: Vec<Entity> = Vec::new();
         match self {
-            Encounters::Cultist => {
-                spawned.push(mobs::cultist(ecs, 0, 0));
+            Encounters::Cultist(num) => {
+                for _ in 0 .. num {
+                    spawned.push(mobs::cultist(ecs, 0, 0));
+                }
             }
-            Encounters::JawWorm => {
-                spawned.push(mobs::jaw_worm(ecs, 0, 0));
+            Encounters::JawWorm(num) => {
+                for _ in 0 .. num {
+                    spawned.push(mobs::jaw_worm(ecs, 0, 0));
+                }
             }
             Encounters::Louses(num) => {
                 for _ in 0 .. num {
@@ -32,7 +38,7 @@ impl Encounters {
                     }
                 }
             }
-            Encounters::SmallSlimes => {
+            Encounters::SlimePair => {
                 let roll = { ecs.write_resource::<RandomNumberGenerator>().range(0, 2) };
                 match roll {
                     0 => spawned.push(mobs::acid_slime_m(ecs, 0, 0)),
@@ -44,13 +50,20 @@ impl Encounters {
                     _ => spawned.push(mobs::spike_slime_s(ecs, 0, 0)),
                 }
             }
-            Encounters::LotsOfSlimes(num) => {
+            Encounters::SmallSlimes(num) => {
                 for _ in 0 .. num {
                     let roll = { ecs.write_resource::<RandomNumberGenerator>().range(0, 2) };
                     match roll {
                         0 => spawned.push(mobs::acid_slime_s(ecs, 0, 0)),
                         _ => spawned.push(mobs::spike_slime_s(ecs, 0, 0)),
                     }
+                }
+            }
+            Encounters::LargeSlime => {
+                let roll = { ecs.write_resource::<RandomNumberGenerator>().range(0, 2) };
+                match roll {
+                    0 => spawned.push(mobs::acid_slime_l(ecs, 0, 0)),
+                    _ => spawned.push(mobs::spike_slime_l(ecs, 0, 0)),
                 }
             }
             Encounters::GremlinGang(num) => {
@@ -71,6 +84,15 @@ impl Encounters {
                         }
                         3 => spawned.push(mobs::gremlin_wizard(ecs, 0, 0)),
                         _ => spawned.push(mobs::shield_gremlin(ecs, 0, 0)),
+                    }
+                }
+            }
+            Encounters::Slaver(num) => {
+                for _ in 0 .. num {
+                    let roll = { ecs.write_resource::<RandomNumberGenerator>().range(0, 2) };
+                    match roll {
+                        0 => spawned.push(mobs::red_slaver(ecs, 0, 0)),
+                        _ => spawned.push(mobs::blue_slaver(ecs, 0, 0)),
                     }
                 }
             }

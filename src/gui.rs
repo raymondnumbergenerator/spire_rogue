@@ -78,6 +78,10 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
                     let damage = amount + stat.strength;
                     tooltip.push(format!("{}:A{}W{}", range, damage, turns));
                 }
+                monsters::Attacks::AttackAndApplyVulnerable{name: _, range, amount, turns} => {
+                    let damage = amount + stat.strength;
+                    tooltip.push(format!("{}:A{}V{}", range, damage, turns));
+                }
                 monsters::Attacks::ApplyFrail{name: _, range, turns} => {
                     tooltip.push(format!("{}:F{}", range, turns));
                 }
@@ -240,10 +244,16 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
     for (_, stats) in (&players, &combat_stats).join() {
         let health = format!("HP: {} / {}", stats.hp, stats.max_hp);
         let block = format!("[{}]", stats.block);
+        let strength = format!("S{}", stats.strength);
+        let dexterity = format!("D{}", stats.dexterity);
         ctx.print_color(x, MAPHEIGHT, RGB::named(rltk::RED), RGB::named(rltk::BLACK), &health);
         x += health.len() + 1;
         ctx.print_color(x, MAPHEIGHT, RGB::named(rltk::CYAN), RGB::named(rltk::BLACK), &block);
         x += block.len() + 1;
+        ctx.print_color(x, MAPHEIGHT, RGB::named(rltk::RED), RGB::named(rltk::BLACK), &strength);
+        x += strength.len() + 1;
+        ctx.print_color(x, MAPHEIGHT, RGB::named(rltk::GREEN), RGB::named(rltk::BLACK), &dexterity);
+        x += dexterity.len() + 1;
     }
 
     // Draw player status effects

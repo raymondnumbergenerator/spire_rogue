@@ -1,6 +1,6 @@
 use specs::prelude::*;
 use super::super::{
-    Name, creature, Gamelog,
+    Name, Position, creature, Gamelog,
     item, deck, Map,
     effects, status
 };
@@ -91,6 +91,26 @@ pub fn run(ecs: &mut World) {
                             if let Some(_) = creatures.get(*creature) {
                                 if *creature != entity { targets.push(*creature); }
                             }
+                        }
+                    }
+
+                    // Move caster to targeted location
+                    let effect_teleport = ecs.read_storage::<effects::Teleport>();
+                    if let Some(_) = effect_teleport.get(intent.action) {
+                        let mut positions = ecs.write_storage::<Position>();
+                        let mut viewsheds = ecs.write_storage::<creature::Viewshed>();
+                        let mut ent_pos = positions.get_mut(entity).unwrap();
+                        let dest_idx = map.xy_idx(target.x, target.y);
+
+                        if !map.blocked[dest_idx] {
+                            ent_pos.x = target.x;
+                            ent_pos.y = target.y;
+                            if let Some(viewshed) = viewsheds.get_mut(entity) { viewshed.dirty = true; }
+                        }
+                        if entity == *player_entity {
+                            let mut player_pos = ecs.write_resource::<rltk::Point>();
+                            player_pos.x = ent_pos.x;
+                            player_pos.y = ent_pos.y;
                         }
                     }
                 }
@@ -189,14 +209,14 @@ pub fn run(ecs: &mut World) {
                 let mut player = ecs.write_storage::<creature::Player>();
                 let potions = ecs.read_storage::<item::Potion>();
                 let cards = ecs.read_storage::<item::Card>();
-                let card_ethereal = ecs.read_storage::<item::Ethereal>();
-                let card_fragile = ecs.read_storage::<item::Fragile>();
                 if let Some(_) = cards.get(intent.action) {
                     if let Some(player_energy) = player.get_mut(*player_entity) {
                         player_energy.energy -= cards.get(intent.action).unwrap().energy_cost;
                     }
         
                     let mut destroy = false;
+                    let card_ethereal = ecs.read_storage::<item::Ethereal>();
+                    let card_fragile = ecs.read_storage::<item::Fragile>();
                     if let Some(_) = card_ethereal.get(intent.action) { destroy = true; }
                     if let Some(_) = card_fragile.get(intent.action) { destroy = true; }
         

@@ -48,10 +48,10 @@ pub fn describe_card(ecs: &World, card: Entity) {
             description.push(format!("AOE {}.", action.radius))
         }
         if let Some(_) = fragile.get(card) {
-            description.push(format!("Fragile."))
+            description.push("Fragile.".to_string())
         }
         if let Some(_) = ethereal.get(card) {
-            description.push(format!("Ethereal."))
+            description.push("Ethereal.".to_string())
         }
     }
 
@@ -113,6 +113,13 @@ pub fn describe_card(ecs: &World, card: Entity) {
             let to_hand = if action.to_hand { "hand" } else { "discard" };
             description.push(format!("Add {} {} to your {}.",
                 action.number, action.card.to_name(), to_hand))
+        }
+    }
+
+    {
+        let effect_move = ecs.read_storage::<effects::Teleport>();
+        if let Some(_) = effect_move.get(card) {
+            description.push("Move to the targeted tile if possible.".to_string());
         }
     }
 
