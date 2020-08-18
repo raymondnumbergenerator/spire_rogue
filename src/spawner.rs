@@ -5,7 +5,7 @@ use rltk::{RGB, RandomNumberGenerator};
 use super::{
     Name, Position, Renderable, saveload,
     creature, effects, cards, item, monsters,
-    util::RandomTable, util::Rect, map::MAPWIDTH,
+    util::Rect, map::MAPWIDTH,
 };
 
 pub fn player(ecs: &mut World, x: i32, y: i32) -> Entity {

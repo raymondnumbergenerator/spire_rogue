@@ -8,11 +8,15 @@ pub enum Encounters {
     Cultist(i32),
     JawWorm(i32),
     Louses(i32),
-    SlimePair,
+    SlimePair(i32),
     SmallSlimes(i32),
-    LargeSlime,
+    LargeSlime(i32),
     GremlinGang(i32),
     Slaver(i32),
+    FungiBeast(i32),
+    Looter(i32),
+    ExordiumThugs(i32),
+    ExordiumWildlife(i32),
 }
 
 impl Encounters {
@@ -38,16 +42,18 @@ impl Encounters {
                     }
                 }
             }
-            Encounters::SlimePair => {
-                let roll = { ecs.write_resource::<RandomNumberGenerator>().range(0, 2) };
-                match roll {
-                    0 => spawned.push(mobs::acid_slime_m(ecs, 0, 0)),
-                    _ => spawned.push(mobs::spike_slime_m(ecs, 0, 0)),
-                }
-                let roll = { ecs.write_resource::<RandomNumberGenerator>().range(0, 2) };
-                match roll {
-                    0 => spawned.push(mobs::acid_slime_s(ecs, 0, 0)),
-                    _ => spawned.push(mobs::spike_slime_s(ecs, 0, 0)),
+            Encounters::SlimePair(num) => {
+                for _ in 0 .. num {
+                    let roll = { ecs.write_resource::<RandomNumberGenerator>().range(0, 2) };
+                    match roll {
+                        0 => spawned.push(mobs::acid_slime_m(ecs, 0, 0)),
+                        _ => spawned.push(mobs::spike_slime_m(ecs, 0, 0)),
+                    }
+                    let roll = { ecs.write_resource::<RandomNumberGenerator>().range(0, 2) };
+                    match roll {
+                        0 => spawned.push(mobs::acid_slime_s(ecs, 0, 0)),
+                        _ => spawned.push(mobs::spike_slime_s(ecs, 0, 0)),
+                    }
                 }
             }
             Encounters::SmallSlimes(num) => {
@@ -59,11 +65,13 @@ impl Encounters {
                     }
                 }
             }
-            Encounters::LargeSlime => {
-                let roll = { ecs.write_resource::<RandomNumberGenerator>().range(0, 2) };
-                match roll {
-                    0 => spawned.push(mobs::acid_slime_l(ecs, 0, 0)),
-                    _ => spawned.push(mobs::spike_slime_l(ecs, 0, 0)),
+            Encounters::LargeSlime(num) => {
+                for _ in 0 .. num {
+                    let roll = { ecs.write_resource::<RandomNumberGenerator>().range(0, 2) };
+                    match roll {
+                        0 => spawned.push(mobs::acid_slime_l(ecs, 0, 0)),
+                        _ => spawned.push(mobs::spike_slime_l(ecs, 0, 0)),
+                    }
                 }
             }
             Encounters::GremlinGang(num) => {
@@ -93,6 +101,47 @@ impl Encounters {
                     match roll {
                         0 => spawned.push(mobs::red_slaver(ecs, 0, 0)),
                         _ => spawned.push(mobs::blue_slaver(ecs, 0, 0)),
+                    }
+                }
+            }
+            Encounters::FungiBeast(num) => {
+                for _ in 0 .. num {
+                    spawned.push(mobs::fungi_beast(ecs, 0, 0));
+                }
+            }
+            Encounters::Looter(num) => {
+                for _ in 0 .. num {
+                    spawned.push(mobs::looter(ecs, 0, 0));
+                }
+            }
+            Encounters::ExordiumThugs(num) => {
+                for _ in 0 .. num {
+                    let roll = { ecs.write_resource::<RandomNumberGenerator>().range(0, 3) };
+                    match roll {
+                        0 => spawned.extend(Encounters::Louses(1).spawn(ecs)),
+                        1 => spawned.push(mobs::acid_slime_m(ecs, 0, 0)),
+                        _ => spawned.push(mobs::spike_slime_m(ecs, 0, 0)),
+                    }
+                    let roll = { ecs.write_resource::<RandomNumberGenerator>().range(0, 3) };
+                    match roll {
+                        0 => spawned.push(mobs::looter(ecs, 0, 0)),
+                        1 => spawned.push(mobs::cultist(ecs, 0, 0)),
+                        _ => spawned.extend(Encounters::Slaver(1).spawn(ecs)),
+                    }
+                }
+            }
+            Encounters::ExordiumWildlife(num) => {
+                for _ in 0 .. num {
+                    let roll = { ecs.write_resource::<RandomNumberGenerator>().range(0, 2) };
+                    match roll {
+                        0 => spawned.push(mobs::fungi_beast(ecs, 0, 0)),
+                        _ => spawned.push(mobs::jaw_worm(ecs, 0, 0))
+                    }
+                    let roll = { ecs.write_resource::<RandomNumberGenerator>().range(0, 3) };
+                    match roll {
+                        0 => spawned.extend(Encounters::Louses(1).spawn(ecs)),
+                        1 => spawned.push(mobs::acid_slime_m(ecs, 0, 0)),
+                        _ => spawned.push(mobs::spike_slime_m(ecs, 0, 0)),
                     }
                 }
             }

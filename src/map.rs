@@ -59,7 +59,6 @@ impl Map {
     }
 
     pub fn populate_blocked(&mut self) {
-
         for (i, tile) in self.tiles.iter_mut().enumerate() {
             self.blocked[i] = *tile == TileType::Wall;
         }
@@ -93,13 +92,13 @@ impl Map {
 
     pub fn new_map_rooms_and_corridors(map_depth: i32) -> Map {
         let mut map = build_map(MAPWIDTH as i32, MAPHEIGHT as i32, TileType::Wall, map_depth);
-        
+
         const MAX_ROOMS: i32 = 30;
         const MIN_SIZE: i32 = 6;
         const MAX_SIZE:i32 = 10;
-    
+
         let mut rng = RandomNumberGenerator::new();
-    
+
         for _ in 0 .. MAX_ROOMS {
             let w = rng.range(MIN_SIZE, MAX_SIZE);
             let h = rng.range(MIN_SIZE, MAX_SIZE);
@@ -133,7 +132,7 @@ impl Map {
         let stairs_position = map.rooms[map.rooms.len() - 1].center();
         let stairs_idx = map.xy_idx(stairs_position.0, stairs_position.1);
         map.tiles[stairs_idx] = TileType::DownStairs;
-    
+
         map
     }
 

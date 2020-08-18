@@ -525,3 +525,67 @@ pub fn red_slaver(ecs: &mut World, x: i32, y: i32) -> Entity {
         .with(creature::Intent{ intent, used: false })
         .build()
 }
+
+pub fn fungi_beast(ecs: &mut World, x: i32, y: i32) -> Entity {
+    let hp = ecs.write_resource::<RandomNumberGenerator>().range(22, 29);
+
+    let attack_bite = monsters::Attacks::NormalAttack{
+        name: "Bite".to_string(),
+        amount: 6,
+        range: 1
+    };
+    let attack_grow = monsters::Attacks::BuffStrength{
+        name: "Grow".to_string(),
+        amount: 4,
+        range: 1
+    };
+    let intent = attack_bite.clone().to_attack(ecs);
+
+    let attack_cycle = creature::AttackCycle::new_weighted()
+        .add_weighted(attack_bite, 5)
+        .add_weighted(attack_grow, 6);
+
+    build_monster(ecs, "Fungi Beast", x, y, rltk::to_cp437('f'), RGB::named(rltk::GREEN))
+        .with(creature::CombatStats{ max_hp: hp, hp: hp, block: 0,
+            base_strength: 0, strength: 0,
+            base_dexterity: 0, dexterity: 0
+        })
+        .with(attack_cycle)
+        .with(creature::Intent{ intent, used: false })
+        .build()
+}
+
+pub fn looter(ecs: &mut World, x: i32, y: i32) -> Entity {
+    let hp = ecs.write_resource::<RandomNumberGenerator>().range(44, 49);
+
+    let attack_mug = monsters::Attacks::NormalAttack{
+        name: "Mug".to_string(),
+        amount: 10,
+        range: 1
+    };
+    let attack_lunge = monsters::Attacks::NormalAttack{
+        name: "Lunge".to_string(),
+        amount: 12,
+        range: 2
+    };
+    let attack_smoke_bomb = monsters::Attacks::GainBlock{
+        name: "Smoke Bomg".to_string(),
+        amount: 6,
+        range: 2
+    };
+    let intent = attack_mug.clone().to_attack(ecs);
+
+    let attack_cycle = creature::AttackCycle::new_sequential()
+        .add_sequential(attack_mug)
+        .add_sequential(attack_lunge)
+        .add_sequential(attack_smoke_bomb);
+
+    build_monster(ecs, "Looter", x, y, rltk::to_cp437('t'), RGB::named(rltk::BLUE))
+        .with(creature::CombatStats{ max_hp: hp, hp: hp, block: 0,
+            base_strength: 0, strength: 0,
+            base_dexterity: 0, dexterity: 0
+        })
+        .with(attack_cycle)
+        .with(creature::Intent{ intent, used: false })
+        .build()
+}
